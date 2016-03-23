@@ -23,15 +23,15 @@ typedef enum {
 
 class Z80 {
 private:
-    reg_t AF;
-    reg_t BC;
-    reg_t DE;
-    reg_t HL;
+    reg_t AF;   // AF register 16bits
+    reg_t BC;   // BC register 16bits
+    reg_t DE;   // DE register 16bits
+    reg_t HL;   // HL register 16bits
 
-    reg_t SP;
-    reg_t CP;
+    reg_t SP;   // Stack Pointer 16bits
+    reg_t CP;   // Counter Program 16bits
 
-    uint16_t cpu_clock_counter;
+    uint16_t cpu_clock_counter; // Clock counter
 public:
     // Getters
     inline uint16_t getCP() { return CP.val; }
@@ -76,7 +76,6 @@ public:
     inline void resetFlag(FLAGS_T flag) { setF(getF() & ~flag); }
 
     inline void addClockCounter(uint8_t value) { cpu_clock_counter += value; }
-
     inline uint16_t incCP() { return ++CP.val; }
 
 };
