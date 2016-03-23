@@ -30,6 +30,8 @@ private:
 
     reg_t SP;
     reg_t CP;
+
+    uint16_t cpu_clock_counter;
 public:
     // Getters
     inline uint16_t getCP() { return CP.val; }
@@ -50,8 +52,31 @@ public:
     inline uint8_t getL() { return HL.bytes.l; }
 
     inline uint8_t getFlag(FLAGS_T flag) { return (uint8_t) ((getF() & flag) != 0); }
+    inline uint16_t getClockCounter() { return cpu_clock_counter; }
 
-    // Useful methods
+    // Setters
+    inline void setCP(uint16_t value) { CP.val = value; }
+    inline void setSP(uint16_t value) { SP.val = value; }
+
+    inline void setAF(uint16_t value) { AF.val = value; }
+    inline void setBC(uint16_t value) { BC.val = value; }
+    inline void setDE(uint16_t value) { DE.val = value; }
+    inline void setHL(uint16_t value) { HL.val = value; }
+
+    inline void setA(uint8_t value) { AF.bytes.h = value; }
+    inline void setF(uint8_t value) { AF.bytes.l = value; }
+    inline void setB(uint8_t value) { BC.bytes.h = value; }
+    inline void setC(uint8_t value) { BC.bytes.l = value; }
+    inline void setD(uint8_t value) { DE.bytes.h = value; }
+    inline void setE(uint8_t value) { DE.bytes.l = value; }
+    inline void setH(uint8_t value) { HL.bytes.h = value; }
+    inline void setL(uint8_t value) { HL.bytes.l = value; }
+
+    inline void setFlag(FLAGS_T flag) { setF(getF() | flag); }
+    inline void resetFlag(FLAGS_T flag) { setF(getF() & ~flag); }
+
+    inline void addClockCounter(uint8_t value) { cpu_clock_counter += value; }
+
     inline uint16_t incCP() { return ++CP.val; }
 
 };
