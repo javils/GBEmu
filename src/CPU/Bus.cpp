@@ -4,8 +4,8 @@
 
 #include "Bus.h"
 
-void Bus::connectToMemory(BasicMemory *mem) {
-    this->mem = mem;
+void Bus::connectToMemory(unique_ptr<BasicMemory> mem) {
+    this->mem = move(mem);
 }
 
 uint8_t Bus::receiveByte(uint16_t address) {

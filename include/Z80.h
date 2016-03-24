@@ -9,6 +9,8 @@
 #include "Bus.h"
 
 
+using namespace std;
+
 /**
  * Flags
  */
@@ -35,8 +37,14 @@ private:
 
     uint16_t cpu_clock_counter; //< Clock counter
 
-    Bus * bus;  //< Bus for the memory.
+    unique_ptr<Bus> bus;  //< Bus for the memory.
 public:
+    /**
+     * Constructor
+     * @param memory pointer to the memory that is used by the micro.
+     */
+    Z80(unique_ptr<BasicMemory> memory);
+
     // Getters
     inline uint16_t getCP() { return CP.val; }
     inline uint16_t getSP() { return SP.val; }
@@ -113,6 +121,10 @@ public:
      * @see Bus
      */
     inline uint16_t readWordMem(uint16_t address) { return bus->receiveWord(address); }
+
+    void executeNextOpcode();
+
+    void executeOpcode(uint8_t opcode); //< Used for debugging and tests.
 
 };
 

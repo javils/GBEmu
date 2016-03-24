@@ -3,4 +3,9 @@
 //
 
 #include "Z80.h"
-#include "Memory.h"
+
+
+Z80::Z80(unique_ptr<BasicMemory> memory) {
+    bus.reset(new Bus());   // Init pointer.
+    bus->connectToMemory(move(memory)); // Connect bus with memory.
+}

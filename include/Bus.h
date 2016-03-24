@@ -6,18 +6,20 @@
 #define GBEMU_BUS_H
 
 #include <stdint.h>
+#include <memory>
 #include "Memory.h"
 
+using namespace std;
 /**
  * Class that simulates a microprocessor bus.
  */
 class Bus {
 public:
     /**
-     * Connects the memory bus
+     * Connects the memory with the bus.
      * @param mem pointer to the memory you want to access.
      */
-    void connectToMemory(BasicMemory *mem);
+    void connectToMemory(unique_ptr<BasicMemory> mem);
 
     /**
      * Send byte to the memory.
@@ -48,7 +50,7 @@ public:
     uint16_t receiveWord(uint16_t address);
 
 private:
-    BasicMemory *mem;
+    unique_ptr<BasicMemory> mem;
 };
 
 #endif //GBEMU_BUS_H
