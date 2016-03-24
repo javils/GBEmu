@@ -6,32 +6,36 @@
 #define GBEMU_Z80_H
 
 #include "registers.h"
+#include "Bus.h"
+
 
 /**
  * Flags
  */
 typedef enum {
-    FLAG_Z = 0x80,  // 10000000 Zero
-    FLAG_N = 0x40,  // 01000000 Add/Sub (BCD)
-    FLAG_H = 0x20,  // 00100000 Half-Carry (BCD)
-    FLAG_C = 0x10,  // 00010000 Carry
-    FLAG_3 = 0x08,  // Unused
-    FLAG_2 = 0x04,  // Unused
-    FLAG_1 = 0x02,  // Unused
-    FLAG_0 = 0x01,  // Unused
+    FLAG_Z = 0x80,  //< 10000000 Zero
+    FLAG_N = 0x40,  //< 01000000 Add/Sub (BCD)
+    FLAG_H = 0x20,  //< 00100000 Half-Carry (BCD)
+    FLAG_C = 0x10,  //< 00010000 Carry
+    FLAG_3 = 0x08,  //< Unused
+    FLAG_2 = 0x04,  //< Unused
+    FLAG_1 = 0x02,  //< Unused
+    FLAG_0 = 0x01,  //< Unused
 } FLAGS_T;
 
 class Z80 {
 private:
-    reg_t AF;   // AF register 16bits
-    reg_t BC;   // BC register 16bits
-    reg_t DE;   // DE register 16bits
-    reg_t HL;   // HL register 16bits
+    reg_t AF;   //< AF register 16bits
+    reg_t BC;   //< BC register 16bits
+    reg_t DE;   //< DE register 16bits
+    reg_t HL;   //< HL register 16bits
 
-    reg_t SP;   // Stack Pointer 16bits
-    reg_t CP;   // Counter Program 16bits
+    reg_t SP;   //< Stack Pointer 16bits
+    reg_t CP;   //< Counter Program 16bits
 
-    uint16_t cpu_clock_counter; // Clock counter
+    uint16_t cpu_clock_counter; //< Clock counter
+
+    Bus * bus;  //< Bus for the memory.
 public:
     // Getters
     inline uint16_t getCP() { return CP.val; }
@@ -77,6 +81,38 @@ public:
 
     inline void addClockCounter(uint8_t value) { cpu_clock_counter += value; }
     inline uint16_t incCP() { return ++CP.val; }
+
+    /**
+     * Write a byte in the bus.
+     * @param address address where want to write.
+     * @param value value to write.
+     * @see Bus
+     */
+    inline void writeByteMem(uint16_t address, uint8_t value) { bus->sendByte(address, value); }
+
+    /**
+     * Write a word in the bus.
+     * @param address where want to write.
+     * @param value value to write.
+     * @see Bus
+     */
+    inline void writeWordMem(uint16_t address, uint16_t value) { bus->sendWord(address, value); }
+
+    /**
+     * Read byte from the bus.
+     * @param address address where want to read.
+     * @return byte read from address.
+     * @see Bus
+     */
+    inline uint8_t readByteMem(uint16_t address) { return bus->receiveByte(address); }
+
+    /**
+     * Read word from the bus.
+     * @param address address where want to read.
+     * @return word read from the address.
+     * @see Bus
+     */
+    inline uint16_t readWordMem(uint16_t address) { return bus->receiveWord(address); }
 
 };
 
