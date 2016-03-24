@@ -2,17 +2,19 @@
 // Created by Javier Luque Sanabria on 23/3/16.
 //
 
+#include <iostream>
 #include "CppUTest/TestHarness.h"
 #include "Z80.h"
 
 TEST_GROUP(CPUTests){
-    Z80 *cpu;
+    unique_ptr<Z80> cpu;
+    unique_ptr<BasicMemory> mem;
     void setup() {
-        cpu = new Z80();
+        mem.reset(new Memory_DMG());
+        cpu.reset(new Z80(move(mem)));
     }
 
     void teardown() {
-        delete cpu;
     }
 };
 
@@ -94,4 +96,22 @@ TEST(CPUTests, Flags){
     LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
     cpu->resetFlag(FLAG_Z);
     LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+}
+
+TEST(CPUTests, MemoryTests) {
+    cpu->writeByteMem(0x1, 0x1);
+    cpu->writeByteMem(0x2, 0x2);
+    cpu->writeByteMem(0x3, 0x3);
+    cpu->writeWordMem(0x4, 0x9876);
+
+    LONGS_EQUAL(0x0, cpu->readByteMem(0x0));
+    LONGS_EQUAL(0x1, cpu->readByteMem(0x1));
+    LONGS_EQUAL(0x2, cpu->readByteMem(0x2));
+    LONGS_EQUAL(0x3, cpu->readByteMem(0x3));
+    LONGS_EQUAL(0x76, cpu->readByteMem(0x04));
+    LONGS_EQUAL(0x98, cpu->readByteMem(0x05));
+
+    LONGS_EQUAL(0x9876, cpu->readWordMem(0x4));
+    LONGS_EQUAL(0x0098, cpu->readWordMem(0x5));
+    LONGS_EQUAL(0x0, cpu->readWordMem(0x06));
 }
