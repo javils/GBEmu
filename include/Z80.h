@@ -84,8 +84,11 @@ public:
     inline void setH(uint8_t value) { HL.bytes.h = value; }
     inline void setL(uint8_t value) { HL.bytes.l = value; }
 
-    inline void setFlag(FLAGS_T flag) { setF(getF() | flag); }
-    inline void resetFlag(FLAGS_T flag) { setF(getF() & ~flag); }
+    inline void setFlag(uint8_t flag) { setF(getF() | flag); }
+
+    inline void resetFlag(uint8_t flag) { setF(getF() & ~flag); }
+
+    inline void setFlagCond(uint8_t flag, bool cond) { if (cond) setFlag(flag); else resetFlag(flag); }
 
     inline void addClockCounter(uint8_t value) { cpu_clock_counter += value; }
     inline uint16_t incCP() { return ++CP.val; }
