@@ -7,6 +7,12 @@
 
 
 Z80::Z80(unique_ptr<BasicMemory> memory) {
+    AF.reset(new reg_t());
+    BC.reset(new reg_t());
+    DE.reset(new reg_t());
+    HL.reset(new reg_t());
+    CP.reset(new reg_t());
+    SP.reset(new reg_t());
     bus.reset(new Bus());   // Init pointer.
     bus->connectToMemory(move(memory)); // Connect bus with memory.
 }
@@ -14,6 +20,14 @@ Z80::Z80(unique_ptr<BasicMemory> memory) {
 void Z80::executeNextOpcode() {
     uint8_t opcode = bus->receiveByte(getCP());
     executeOpcode(opcode);
+}
+
+void Z80::op_inc_8(uint8_t *reg) {
+    setFlagCond(FLAG_H, (*reg & 0xF) == 0xF);
+    ++(*reg);
+    setFlagCond(FLAG_Z, *reg == 0);
+    resetFlag(FLAG_N);
+    addClockCounter(4);
 }
 
 void Z80::executeOpcode(uint8_t opcode) {
@@ -30,30 +44,17 @@ void Z80::executeOpcode(uint8_t opcode) {
             addClockCounter(8);
             break;
         case 0x3://INC BC   8 cycles   - - - -
-        {
-            uint16_t bc = getBC();
-            setBC(++bc);
+            ++(*refBC());
             addClockCounter(8);
             break;
-        }
         case 0x4://INC B   4 cycles   Z 0 H -
-        {
-            setFlagCond(FLAG_H, (getB() & 0xF) == 0xF);
-            uint8_t b = getB();
-            setB(++b);
-            setFlagCond(FLAG_Z, getB() == 0);
-            resetFlag(FLAG_N);
-            addClockCounter(4);
+            op_inc_8(refB());
             break;
-        }
         case 0x5://DEC B   4 cycles   Z 1 H -
-        {
             setFlagCond(FLAG_H, (getB() & 0xF) == 0xF);
-            uint8_t b = getB();
-            setB(--b);
+            --(*refB());
             addClockCounter(4);
             break;
-        }
         case 0x6://LD B,d8   8 cycles   - - - -
             setB(readByteMem(getCP()));
             addClockCounter(8);
@@ -80,12 +81,10 @@ void Z80::executeOpcode(uint8_t opcode) {
             addClockCounter(8);
             break;
         case 0xb://DEC BC   8 cycles   - - - -
-        {
-            uint16_t bc = getBC();
-            setBC(++bc);
+            ++(*refBC());
             break;
-        }
         case 0xc://INC C   4 cycles   Z 0 H -
+            op_inc_8(refC());
             break;
         case 0xd://DEC C   4 cycles   Z 1 H -
             break;
