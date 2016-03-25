@@ -3,7 +3,15 @@ find_package(CppUTest REQUIRED)
 enable_testing()
 
 # Add all .c, .cpp and .h here
-set(TEST_SRC GBTests.cpp CPUTests.cpp)
+set(TEST_SRC
+        GBTests.cpp
+        CPUTests.cpp
+        ByteLoadOpTests.cpp
+        CPUControlTests.cpp
+        WordLoadOpTests.cpp
+        WordLogicalTests.cpp
+        ByteLogicalTests.cpp
+        RotateShiftTests.cpp)
 
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lCppUTest" )
 

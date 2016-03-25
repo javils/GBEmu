@@ -41,34 +41,25 @@ private:
 
     // Opcode functions
     void op_inc_8(uint8_t *reg);
+    void op_dec_8(uint8_t *reg);
+    void op_ld_r8_d8(uint8_t *reg);
 
     // Helper functions to get the pointer. Only used internally.
     inline uint16_t *refCP() { return &(CP->val); }
-
     inline uint16_t *refSP() { return &(SP->val); }
 
     inline uint16_t *refAF() { return &(AF->val); }
-
     inline uint16_t *refBC() { return &(BC->val); }
-
     inline uint16_t *refDE() { return &(DE->val); }
-
     inline uint16_t *refHL() { return &(HL->val); }
 
     inline uint8_t *refA() { return &(AF->bytes.h); }
-
     inline uint8_t *refF() { return &(AF->bytes.l); }
-
     inline uint8_t *refB() { return &(BC->bytes.h); }
-
     inline uint8_t *refC() { return &(BC->bytes.l); }
-
     inline uint8_t *refD() { return &(DE->bytes.h); }
-
     inline uint8_t *refE() { return &(DE->bytes.l); }
-
     inline uint8_t *refH() { return &(HL->bytes.h); }
-
     inline uint8_t *refL() { return &(HL->bytes.l); }
 public:
     /**
@@ -79,31 +70,20 @@ public:
 
     // Getters
     inline uint16_t getCP() { return CP->val; }
-
     inline uint16_t getSP() { return SP->val; }
 
     inline uint16_t getAF() { return AF->val; }
-
     inline uint16_t getBC() { return BC->val; }
-
     inline uint16_t getDE() { return DE->val; }
-
     inline uint16_t getHL() { return HL->val; }
 
     inline uint8_t getA() { return AF->bytes.h; }
-
     inline uint8_t getF() { return AF->bytes.l; }
-
     inline uint8_t getB() { return BC->bytes.h; }
-
     inline uint8_t getC() { return BC->bytes.l; }
-
     inline uint8_t getD() { return DE->bytes.h; }
-
     inline uint8_t getE() { return DE->bytes.l; }
-
     inline uint8_t getH() { return HL->bytes.h; }
-
     inline uint8_t getL() { return HL->bytes.l; }
 
     inline uint8_t getFlag(FLAGS_T flag) { return (uint8_t) ((getF() & flag) != 0); }
@@ -111,37 +91,24 @@ public:
 
     // Setters
     inline void setCP(uint16_t value) { CP->val = value; }
-
     inline void setSP(uint16_t value) { SP->val = value; }
 
     inline void setAF(uint16_t value) { AF->val = value; }
-
     inline void setBC(uint16_t value) { BC->val = value; }
-
     inline void setDE(uint16_t value) { DE->val = value; }
-
     inline void setHL(uint16_t value) { HL->val = value; }
 
     inline void setA(uint8_t value) { AF->bytes.h = value; }
-
     inline void setF(uint8_t value) { AF->bytes.l = value; }
-
     inline void setB(uint8_t value) { BC->bytes.h = value; }
-
     inline void setC(uint8_t value) { BC->bytes.l = value; }
-
     inline void setD(uint8_t value) { DE->bytes.h = value; }
-
     inline void setE(uint8_t value) { DE->bytes.l = value; }
-
     inline void setH(uint8_t value) { HL->bytes.h = value; }
-
     inline void setL(uint8_t value) { HL->bytes.l = value; }
 
     inline void setFlag(uint8_t flag) { setF(getF() | flag); }
-
     inline void resetFlag(uint8_t flag) { setF(getF() & ~flag); }
-
     inline void setFlagCond(uint8_t flag, bool cond) { if (cond) setFlag(flag); else resetFlag(flag); }
 
     inline void addClockCounter(uint8_t value) { cpu_clock_counter += value; }

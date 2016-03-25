@@ -15,10 +15,11 @@ Z80::Z80(unique_ptr<BasicMemory> memory) {
     SP.reset(new reg_t());
     bus.reset(new Bus());   // Init pointer.
     bus->connectToMemory(move(memory)); // Connect bus with memory.
+    cpu_clock_counter = 0;
 }
 
 void Z80::executeNextOpcode() {
-    uint8_t opcode = bus->receiveByte(getCP());
+    uint8_t opcode = bus->receiveByte(((*refCP())++));
     executeOpcode(opcode);
 }
 
@@ -30,6 +31,20 @@ void Z80::op_inc_8(uint8_t *reg) {
     addClockCounter(4);
 }
 
+void Z80::op_dec_8(uint8_t *reg) {
+    setFlagCond(FLAG_H, (*reg & 0xF) == 0x0);
+    --(*reg);
+    setFlagCond(FLAG_Z, *reg == 0);
+    setFlag(FLAG_N);
+    addClockCounter(4);
+}
+
+void Z80::op_ld_r8_d8(uint8_t *reg) {
+    (*reg) = readByteMem(getCP());
+    incCP();    // Read byte from memory -> 1 inc CP
+    addClockCounter(8);
+}
+
 void Z80::executeOpcode(uint8_t opcode) {
     switch (opcode) {
         case 0x0://NOP   4 cycles   - - - -
@@ -37,6 +52,7 @@ void Z80::executeOpcode(uint8_t opcode) {
             break;
         case 0x1://LD BC,d16   12 cycles   - - - -
             setBC(readWordMem(getCP()));
+            incCP(); incCP();   // Read word from memory -> 2 inc CP.
             addClockCounter(12);
             break;
         case 0x2://LD (BC),A   8 cycles   - - - -
@@ -51,22 +67,20 @@ void Z80::executeOpcode(uint8_t opcode) {
             op_inc_8(refB());
             break;
         case 0x5://DEC B   4 cycles   Z 1 H -
-            setFlagCond(FLAG_H, (getB() & 0xF) == 0xF);
-            --(*refB());
-            addClockCounter(4);
+            op_dec_8(refB());
             break;
         case 0x6://LD B,d8   8 cycles   - - - -
-            setB(readByteMem(getCP()));
-            addClockCounter(8);
+            op_ld_r8_d8(refB());
             break;
         case 0x7://RLCA   4 cycles   0 0 0 C
             setFlagCond(FLAG_C, (getA() & 0x80) != 0);
             resetFlag(FLAG_Z | FLAG_H | FLAG_N);
-            setA(getA() << 7 | getFlag(FLAG_C));
+            setA((getA() << 1) | getFlag(FLAG_C));
             addClockCounter(4);
             break;
         case 0x8://LD (a16),SP   20 cycles   - - - -
             writeWordMem(readWordMem(getCP()), getSP());
+            incCP(); incCP();   // Read word from memory -> 2 inc CP.
             addClockCounter(20);
             break;
         case 0x9://ADD HL,BC   8 cycles   - 0 H C
@@ -81,14 +95,17 @@ void Z80::executeOpcode(uint8_t opcode) {
             addClockCounter(8);
             break;
         case 0xb://DEC BC   8 cycles   - - - -
-            ++(*refBC());
+            --(*refBC());
+            addClockCounter(8);
             break;
         case 0xc://INC C   4 cycles   Z 0 H -
             op_inc_8(refC());
             break;
         case 0xd://DEC C   4 cycles   Z 1 H -
+            op_dec_8(refC());
             break;
         case 0xe://LD C,d8   8 cycles   - - - -
+            op_ld_r8_d8(refC());
             break;
         case 0xf://RRCA   4 cycles   0 0 0 C
             break;
