@@ -31,6 +31,11 @@ void Z80::op_inc_8(uint8_t *reg) {
     addClockCounter(4);
 }
 
+void Z80::op_inc_16(uint16_t *reg) {
+    ++(*reg);
+    addClockCounter(8);
+}
+
 void Z80::op_dec_8(uint8_t *reg) {
     setFlagCond(FLAG_H, (*reg & 0xF) == 0x0);
     --(*reg);
@@ -39,9 +44,38 @@ void Z80::op_dec_8(uint8_t *reg) {
     addClockCounter(4);
 }
 
+void Z80::op_dec_16(uint16_t *reg) {
+    --(*reg);
+    addClockCounter(8);
+}
+
 void Z80::op_ld_r8_d8(uint8_t *reg) {
     (*reg) = readByteMem(getCP());
     incCP();    // Read byte from memory -> 1 inc CP
+    addClockCounter(8);
+}
+
+void Z80::op_ld_r8_ptr_r16(uint8_t *reg8, uint16_t reg16) {
+    (*reg8) = readByteMem(reg16);
+    addClockCounter(8);
+}
+
+void Z80::op_ld_r16_d16(uint16_t *reg) {
+    (*reg) = readWordMem(getCP());
+    incCP(); incCP();   // Read word from memory -> 2 inc CP.
+    addClockCounter(12);
+}
+
+void Z80::op_ld_ptr_r16_r8(uint16_t reg16, uint8_t *reg8) {
+    writeByteMem(reg16, *reg8);
+    addClockCounter(8);
+}
+
+void Z80::op_add_hl_r16(uint16_t *reg16) {
+    resetFlag(FLAG_N);
+    setFlagCond(FLAG_C, (getHL() + *reg16) > 0xFFFF);
+    setFlagCond(FLAG_H, ((getHL() & 0xFFF) + (*reg16 & 0xFFF)) > 0xFFF);
+    setHL(getHL() +*reg16);
     addClockCounter(8);
 }
 
@@ -51,17 +85,13 @@ void Z80::executeOpcode(uint8_t opcode) {
             addClockCounter(4);
             break;
         case 0x1://LD BC,d16   12 cycles   - - - -
-            setBC(readWordMem(getCP()));
-            incCP(); incCP();   // Read word from memory -> 2 inc CP.
-            addClockCounter(12);
+            op_ld_r16_d16(refBC());
             break;
         case 0x2://LD (BC),A   8 cycles   - - - -
-            writeByteMem(getBC(), getA());
-            addClockCounter(8);
+            op_ld_ptr_r16_r8(getBC(), refA());
             break;
         case 0x3://INC BC   8 cycles   - - - -
-            ++(*refBC());
-            addClockCounter(8);
+            op_inc_16(refBC());
             break;
         case 0x4://INC B   4 cycles   Z 0 H -
             op_inc_8(refB());
@@ -80,23 +110,18 @@ void Z80::executeOpcode(uint8_t opcode) {
             break;
         case 0x8://LD (a16),SP   20 cycles   - - - -
             writeWordMem(readWordMem(getCP()), getSP());
-            incCP(); incCP();   // Read word from memory -> 2 inc CP.
+            incCP();
+            incCP();   // Read word from memory -> 2 inc CP.
             addClockCounter(20);
             break;
         case 0x9://ADD HL,BC   8 cycles   - 0 H C
-            resetFlag(FLAG_N);
-            setFlagCond(FLAG_C, (getHL() + getBC()) > 0xFFFF);
-            setFlagCond(FLAG_H, ((getHL() & 0xFFF) + (getBC() & 0xFFF)) > 0xFFF);
-            setHL(getHL() + getBC());
-            addClockCounter(8);
+            op_add_hl_r16(refBC());
             break;
         case 0xa://LD A,(BC)   8 cycles   - - - -
-            setA(readByteMem(getBC()));
-            addClockCounter(8);
+            op_ld_r8_ptr_r16(refA(), getBC());
             break;
         case 0xb://DEC BC   8 cycles   - - - -
-            --(*refBC());
-            addClockCounter(8);
+            op_dec_16(refBC());
             break;
         case 0xc://INC C   4 cycles   Z 0 H -
             op_inc_8(refC());
@@ -107,40 +132,79 @@ void Z80::executeOpcode(uint8_t opcode) {
         case 0xe://LD C,d8   8 cycles   - - - -
             op_ld_r8_d8(refC());
             break;
+            //TODO: TESTS HERE
         case 0xf://RRCA   4 cycles   0 0 0 C
+            setFlagCond(FLAG_C, (getA() & 0x01) != 0);
+            resetFlag(FLAG_Z | FLAG_H | FLAG_N);
+            setA((getFlag(FLAG_C) << 7) | (getA() >> 1));
+            addClockCounter(4);
             break;
         case 0x10://STOP 0   4 cycles   - - - -
+            //TODO : INTERRUPTS HERE
+            addClockCounter(4);
             break;
         case 0x11://LD DE,d16   12 cycles   - - - -
+            op_ld_r16_d16(refDE());
             break;
         case 0x12://LD (DE),A   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getDE(), refA());
             break;
         case 0x13://INC DE   8 cycles   - - - -
+            op_inc_16(refDE());
             break;
         case 0x14://INC D   4 cycles   Z 0 H -
+            op_inc_8(refD());
             break;
         case 0x15://DEC D   4 cycles   Z 1 H -
+            op_dec_8(refD());
             break;
         case 0x16://LD D,d8   8 cycles   - - - -
+            op_ld_r8_d8(refD());
             break;
         case 0x17://RLA   4 cycles   0 0 0 C
+        {
+            //TODO: CHECK
+            uint8_t c = getFlag(FLAG_C);
+            setFlagCond(FLAG_C, (getA() & 0x8) != 0);
+            resetFlag(FLAG_Z | FLAG_H | FLAG_N);
+            setA((getA() << 1) | c);
+            addClockCounter(4);
             break;
-        case 0x18://JR r8   12 cycles   - - - -
+        }
+        case 0x18://JR d8   12 cycles   - - - -
+            uint8_t d = readByteMem(getCP());
+            incCP();
+            setCP(getCP() + d);
+            addClockCounter(12);
             break;
         case 0x19://ADD HL,DE   8 cycles   - 0 H C
+            op_add_hl_r16(refDE());
             break;
         case 0x1a://LD A,(DE)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refA(), getDE());
             break;
         case 0x1b://DEC DE   8 cycles   - - - -
+            op_dec_16(refDE());
             break;
         case 0x1c://INC E   4 cycles   Z 0 H -
+            op_inc_8(refE());
             break;
         case 0x1d://DEC E   4 cycles   Z 1 H -
+            op_dec_8(refE());
             break;
         case 0x1e://LD E,d8   8 cycles   - - - -
+            op_ld_r8_d8(refE());
             break;
         case 0x1f://RRA   4 cycles   0 0 0 C
+        {
+            // TODO: CHECK
+            uint8_t c = getFlag(FLAG_C);
+            setFlagCond(FLAG_C, (getA() & 0x1) != 0);
+            resetFlag(FLAG_Z | FLAG_H | FLAG_N);
+            setA((c << 7) | (getA() >> 1));
+            addClockCounter(4);
             break;
+        }
         case 0x20://JR NZ,r8   12/8 cycles   - - - -
             break;
         case 0x21://LD HL,d16   12 cycles   - - - -
