@@ -49,9 +49,11 @@ private:
     void op_ld_r8_ptr_r16(uint8_t *reg8, uint16_t reg16);
 
     void op_ld_r16_d16(uint16_t *reg);
-    void op_ld_ptr_r16_r8(uint16_t reg16, uint8_t *reg8);
+    void op_ld_ptr_r16_r8(uint16_t reg16, uint8_t reg8);
 
-    void op_add_hl_r16(uint16_t *reg16);
+    void op_add_hl_r16(uint16_t reg16);
+
+    void op_jr_cond_nn(bool cond);
 
     // Helper functions to get the pointer. Only used internally.
     inline uint16_t *refCP() { return &(CP->val); }

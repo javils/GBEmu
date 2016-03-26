@@ -66,17 +66,30 @@ void Z80::op_ld_r16_d16(uint16_t *reg) {
     addClockCounter(12);
 }
 
-void Z80::op_ld_ptr_r16_r8(uint16_t reg16, uint8_t *reg8) {
-    writeByteMem(reg16, *reg8);
+void Z80::op_ld_ptr_r16_r8(uint16_t reg16, uint8_t reg8) {
+    writeByteMem(reg16, reg8);
     addClockCounter(8);
 }
 
-void Z80::op_add_hl_r16(uint16_t *reg16) {
+void Z80::op_add_hl_r16(uint16_t reg16) {
     resetFlag(FLAG_N);
-    setFlagCond(FLAG_C, (getHL() + *reg16) > 0xFFFF);
-    setFlagCond(FLAG_H, ((getHL() & 0xFFF) + (*reg16 & 0xFFF)) > 0xFFF);
-    setHL(getHL() +*reg16);
+    setFlagCond(FLAG_C, (getHL() + reg16) > 0xFFFF);
+    setFlagCond(FLAG_H, ((getHL() & 0xFFF) + (reg16 & 0xFFF)) > 0xFFF);
+    setHL(getHL() + reg16);
     addClockCounter(8);
+}
+
+void Z80::op_jr_cond_nn(bool cond) {
+    if (cond) {
+        uint8_t r8 = readByteMem(getCP());
+        incCP();
+        setCP(getCP() + (int8_t)r8);    // This value is signed.
+        addClockCounter(12);
+    }
+    else {
+        incCP();
+        addClockCounter(8);
+    }
 }
 
 void Z80::executeOpcode(uint8_t opcode) {
@@ -88,7 +101,7 @@ void Z80::executeOpcode(uint8_t opcode) {
             op_ld_r16_d16(refBC());
             break;
         case 0x2://LD (BC),A   8 cycles   - - - -
-            op_ld_ptr_r16_r8(getBC(), refA());
+            op_ld_ptr_r16_r8(getBC(), getA());
             break;
         case 0x3://INC BC   8 cycles   - - - -
             op_inc_16(refBC());
@@ -115,7 +128,7 @@ void Z80::executeOpcode(uint8_t opcode) {
             addClockCounter(20);
             break;
         case 0x9://ADD HL,BC   8 cycles   - 0 H C
-            op_add_hl_r16(refBC());
+            op_add_hl_r16(getBC());
             break;
         case 0xa://LD A,(BC)   8 cycles   - - - -
             op_ld_r8_ptr_r16(refA(), getBC());
@@ -147,7 +160,7 @@ void Z80::executeOpcode(uint8_t opcode) {
             op_ld_r16_d16(refDE());
             break;
         case 0x12://LD (DE),A   8 cycles   - - - -
-            op_ld_ptr_r16_r8(getDE(), refA());
+            op_ld_ptr_r16_r8(getDE(), getA());
             break;
         case 0x13://INC DE   8 cycles   - - - -
             op_inc_16(refDE());
@@ -171,14 +184,14 @@ void Z80::executeOpcode(uint8_t opcode) {
             addClockCounter(4);
             break;
         }
-        case 0x18://JR d8   12 cycles   - - - -
-            uint8_t d = readByteMem(getCP());
+        case 0x18://JR r8   12 cycles   - - - -
+            uint8_t r8 = readByteMem(getCP());
             incCP();
-            setCP(getCP() + d);
+            setCP(getCP() + (int8_t) r8);    // this value is signed.
             addClockCounter(12);
             break;
         case 0x19://ADD HL,DE   8 cycles   - 0 H C
-            op_add_hl_r16(refDE());
+            op_add_hl_r16(getDE());
             break;
         case 0x1a://LD A,(DE)   8 cycles   - - - -
             op_ld_r8_ptr_r16(refA(), getDE());
@@ -206,44 +219,92 @@ void Z80::executeOpcode(uint8_t opcode) {
             break;
         }
         case 0x20://JR NZ,r8   12/8 cycles   - - - -
+            op_jr_cond_nn(getFlag(FLAG_Z) == 0);
             break;
         case 0x21://LD HL,d16   12 cycles   - - - -
+            op_ld_r16_d16(refHL());
             break;
         case 0x22://LD (HL+),A   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getA());
+            ++(*refHL());
             break;
         case 0x23://INC HL   8 cycles   - - - -
+            op_inc_16(refHL());
             break;
         case 0x24://INC H   4 cycles   Z 0 H -
+            op_inc_8(refH());
             break;
         case 0x25://DEC H   4 cycles   Z 1 H -
+            op_dec_8(refH());
             break;
         case 0x26://LD H,d8   8 cycles   - - - -
+            op_ld_r8_d8(refH());
             break;
         case 0x27://DAA   4 cycles   Z - 0 C
+        {
+            // TODO: CHECK THIS VERY HARD. NO UNDERLINE FROM HERE.
+            uint8_t correction = 0x0;
+
+            if (getA() > 0x99 || getFlag(FLAG_C)) {
+                correction |= 0x60;
+                setFlag(FLAG_C);
+            }
+            else
+                resetFlag(FLAG_C);
+
+            if ((getA() & 0x0F) > 9 || getFlag(FLAG_H))
+                correction |= 0x06;
+
+            if (getFlag(FLAG_N) == 0)
+                setA(getA() + correction);
+            else
+                setA(getA() - correction);
+
+            setFlagCond(FLAG_Z, getA() == 0);
+            resetFlag(FLAG_H);
+            addClockCounter(4);
             break;
+        }
         case 0x28://JR Z,r8   12/8 cycles   - - - -
+            op_jr_cond_nn(getFlag(FLAG_Z));
             break;
         case 0x29://ADD HL,HL   8 cycles   - 0 H C
+            op_add_hl_r16(getHL());
             break;
         case 0x2a://LD A,(HL+)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refA(), getHL());
+            ++(*refHL());
             break;
         case 0x2b://DEC HL   8 cycles   - - - -
+            op_dec_16(refHL());
             break;
         case 0x2c://INC L   4 cycles   Z 0 H -
+            op_inc_8(refL());
             break;
         case 0x2d://DEC L   4 cycles   Z 1 H -
+            op_dec_8(refL());
             break;
         case 0x2e://LD L,d8   8 cycles   - - - -
+            op_ld_r8_d8(refL());
             break;
         case 0x2f://CPL   4 cycles   - 1 1 -
+            setA(~getA());
+            setFlag(FLAG_H);
+            setFlag(FLAG_N);
+            addClockCounter(4);
             break;
         case 0x30://JR NC,r8   12/8 cycles   - - - -
+            op_jr_cond_nn(getFlag(FLAG_C) == 0);
             break;
         case 0x31://LD SP,d16   12 cycles   - - - -
+            op_ld_r16_d16(refSP());
             break;
         case 0x32://LD (HL-),A   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getA());
+            --(*refHL());
             break;
         case 0x33://INC SP   8 cycles   - - - -
+            op_inc_16(refSP());
             break;
         case 0x34://INC (HL)   12 cycles   Z 0 H -
             break;
