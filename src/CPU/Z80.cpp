@@ -49,6 +49,11 @@ void Z80::op_dec_16(uint16_t *reg) {
     addClockCounter(8);
 }
 
+void Z80::op_ld_r8_r8(uint8_t *dst, uint8_t src) {
+    (*dst) = src;
+    addClockCounter(4);
+}
+
 void Z80::op_ld_r8_d8(uint8_t *reg) {
     (*reg) = readByteMem(getCP());
     incCP();    // Read byte from memory -> 1 inc CP
@@ -71,12 +76,96 @@ void Z80::op_ld_ptr_r16_r8(uint16_t reg16, uint8_t reg8) {
     addClockCounter(8);
 }
 
+void Z80::calc_flags(uint16_t result, bool sub) {
+    setFlagCond(FLAG_C, (result & 0x100) == 1);
+    setFlagCond(FLAG_H, (result & 0x08) == 1);
+    setFlagCond(FLAG_N, sub);
+    setFlagCond(FLAG_Z, result == 0);
+}
+
 void Z80::op_add_hl_r16(uint16_t reg16) {
     resetFlag(FLAG_N);
     setFlagCond(FLAG_C, (getHL() + reg16) > 0xFFFF);
     setFlagCond(FLAG_H, ((getHL() & 0xFFF) + (reg16 & 0xFFF)) > 0xFFF);
     setHL(getHL() + reg16);
     addClockCounter(8);
+}
+
+void Z80::op_add_a_r8(uint8_t reg) {
+    calc_flags(getA() + reg, false);
+    setA(getA() + reg);
+    addClockCounter(4);
+}
+
+void Z80::op_adc_a_r8(uint8_t reg) {
+    uint8_t carry = getFlag(FLAG_C);
+    calc_flags(getA() + reg + carry, false);
+    setA(getA() + reg + carry);
+    addClockCounter(4);
+}
+
+void Z80::op_sub_a_r8(uint8_t reg) {
+    calc_flags(getA() - reg, true);
+    setA(getA() - reg);
+    addClockCounter(4);
+}
+
+void Z80::op_sbc_a_r8(uint8_t reg) {
+    uint8_t carry = getFlag(FLAG_C);
+    calc_flags(getA() - reg - carry, true);
+    setA(getA() - reg - carry);
+    addClockCounter(4);
+}
+
+void Z80::op_and_a_r8(uint8_t reg) {
+    resetFlag(FLAG_N | FLAG_C);
+    setFlag(FLAG_H);
+    setA(getA() & reg);
+    setFlagCond(FLAG_Z, getA() == 0);
+    addClockCounter(4);
+}
+
+void Z80::op_xor_a_r8(uint8_t reg) {
+    resetFlag(FLAG_N | FLAG_C | FLAG_H);
+    setA(getA() ^ reg);
+    setFlagCond(FLAG_Z, getA() == 0);
+    addClockCounter(4);
+}
+
+void Z80::op_or_a_r8(uint8_t reg) {
+    resetFlag(FLAG_N | FLAG_C | FLAG_H);
+    setA(getA() | reg);
+    setFlagCond(FLAG_Z, getA() == 0);
+    addClockCounter(4);
+}
+
+void Z80::op_cp_a_r8(uint8_t reg) {
+    calc_flags(getA() - reg, true);
+    addClockCounter(4);
+}
+
+void Z80::op_ret_cond(bool cond) {
+    if (cond) {
+        setCP(readWordMem(getSP()));
+        (*refSP())++;
+        (*refSP())++;   // Read word from SP => 2 inc.
+        addClockCounter(20);
+    }else
+        addClockCounter(8);
+}
+
+void Z80::op_pop_r16(uint16_t *reg) {
+    (*reg) = readWordMem(getSP());
+    (*refSP())++;
+    (*refSP())++;   // Read word from SP => 2 inc.
+    addClockCounter(12);
+}
+
+void Z80::op_push_r16(uint16_t reg) {
+    (*refSP())--;
+    (*refSP())--;
+    writeWordMem(getSP(), reg);
+    addClockCounter(16);
 }
 
 void Z80::op_jr_cond_nn(bool cond) {
@@ -185,11 +274,13 @@ void Z80::executeOpcode(uint8_t opcode) {
             break;
         }
         case 0x18://JR r8   12 cycles   - - - -
+        {
             uint8_t r8 = readByteMem(getCP());
             incCP();
             setCP(getCP() + (int8_t) r8);    // this value is signed.
             addClockCounter(12);
             break;
+        }
         case 0x19://ADD HL,DE   8 cycles   - 0 H C
             op_add_hl_r16(getDE());
             break;
@@ -242,7 +333,7 @@ void Z80::executeOpcode(uint8_t opcode) {
             break;
         case 0x27://DAA   4 cycles   Z - 0 C
         {
-            // TODO: CHECK THIS VERY HARD. NO UNDERLINE FROM HERE.
+            // TODO: CHECK THIS VERY HARD.
             uint8_t correction = 0x0;
 
             if (getA() > 0x99 || getFlag(FLAG_C)) {
@@ -307,288 +398,503 @@ void Z80::executeOpcode(uint8_t opcode) {
             op_inc_16(refSP());
             break;
         case 0x34://INC (HL)   12 cycles   Z 0 H -
+        {
+            uint8_t mem = readByteMem(getHL());
+            resetFlag(FLAG_N);
+            setFlagCond(FLAG_H, (mem & 0x0F) == 0x0F);
+            mem++;
+            setFlagCond(FLAG_Z, mem == 0);
+            writeByteMem(getHL(), mem);
+            addClockCounter(12);
             break;
+        }
         case 0x35://DEC (HL)   12 cycles   Z 1 H -
+        {
+            uint8_t mem = readByteMem(getHL());
+            setFlag(FLAG_N);
+            setFlagCond(FLAG_H, (mem & 0x0F) == 0x00);
+            mem--;
+            setFlagCond(FLAG_Z, mem == 0);
+            writeByteMem(getHL(), mem);
+            addClockCounter(12);
             break;
+        }
         case 0x36://LD (HL),d8   12 cycles   - - - -
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            writeByteMem(getHL(), mem);
+            addClockCounter(12);
             break;
+        }
         case 0x37://SCF   4 cycles   - 0 0 1
+            resetFlag(FLAG_N | FLAG_H);
+            setFlag(FLAG_C);
+            addClockCounter(4);
             break;
         case 0x38://JR C,r8   12/8 cycles   - - - -
+            op_jr_cond_nn(getFlag(FLAG_C));
             break;
         case 0x39://ADD HL,SP   8 cycles   - 0 H C
+            op_add_hl_r16(getSP());
             break;
         case 0x3a://LD A,(HL-)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refA(), getHL());
+            --(*refHL());
             break;
         case 0x3b://DEC SP   8 cycles   - - - -
+            op_dec_16(refSP());
             break;
         case 0x3c://INC A   4 cycles   Z 0 H -
+            op_inc_8(refA());
             break;
         case 0x3d://DEC A   4 cycles   Z 1 H -
+            op_dec_8(refA());
             break;
         case 0x3e://LD A,d8   8 cycles   - - - -
+            op_ld_r8_d8(refA());
             break;
         case 0x3f://CCF   4 cycles   - 0 0 C
+            resetFlag(FLAG_N |FLAG_H);
+            setFlagCond(FLAG_C, getFlag(FLAG_C) == 0);
+            addClockCounter(4);
             break;
         case 0x40://LD B,B   4 cycles   - - - -
+            op_ld_r8_r8(refB(), getB());
             break;
         case 0x41://LD B,C   4 cycles   - - - -
+            op_ld_r8_r8(refB(), getC());
             break;
         case 0x42://LD B,D   4 cycles   - - - -
+            op_ld_r8_r8(refB(), getD());
             break;
         case 0x43://LD B,E   4 cycles   - - - -
+            op_ld_r8_r8(refB(), getE());
             break;
         case 0x44://LD B,H   4 cycles   - - - -
+            op_ld_r8_r8(refB(), getH());
             break;
         case 0x45://LD B,L   4 cycles   - - - -
+            op_ld_r8_r8(refB(), getL());
             break;
         case 0x46://LD B,(HL)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refB(), getHL());
             break;
         case 0x47://LD B,A   4 cycles   - - - -
+            op_ld_r8_r8(refB(), getA());
             break;
         case 0x48://LD C,B   4 cycles   - - - -
+            op_ld_r8_r8(refC(), getB());
             break;
         case 0x49://LD C,C   4 cycles   - - - -
+            op_ld_r8_r8(refC(), getC());
             break;
         case 0x4a://LD C,D   4 cycles   - - - -
+            op_ld_r8_r8(refC(), getD());
             break;
         case 0x4b://LD C,E   4 cycles   - - - -
+            op_ld_r8_r8(refC(), getE());
             break;
         case 0x4c://LD C,H   4 cycles   - - - -
+            op_ld_r8_r8(refC(), getH());
             break;
         case 0x4d://LD C,L   4 cycles   - - - -
+            op_ld_r8_r8(refC(), getL());
             break;
         case 0x4e://LD C,(HL)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refC(), getHL());
             break;
         case 0x4f://LD C,A   4 cycles   - - - -
+            op_ld_r8_r8(refC(), getA());
             break;
         case 0x50://LD D,B   4 cycles   - - - -
+            op_ld_r8_r8(refD(), getB());
             break;
         case 0x51://LD D,C   4 cycles   - - - -
+            op_ld_r8_r8(refD(), getC());
             break;
         case 0x52://LD D,D   4 cycles   - - - -
+            op_ld_r8_r8(refD(), getD());
             break;
         case 0x53://LD D,E   4 cycles   - - - -
+            op_ld_r8_r8(refD(), getE());
             break;
         case 0x54://LD D,H   4 cycles   - - - -
+            op_ld_r8_r8(refD(), getH());
             break;
         case 0x55://LD D,L   4 cycles   - - - -
+            op_ld_r8_r8(refD(), getL());
             break;
         case 0x56://LD D,(HL)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refD(), getHL());
             break;
         case 0x57://LD D,A   4 cycles   - - - -
+            op_ld_r8_r8(refD(), getA());
             break;
         case 0x58://LD E,B   4 cycles   - - - -
+            op_ld_r8_r8(refE(), getB());
             break;
         case 0x59://LD E,C   4 cycles   - - - -
+            op_ld_r8_r8(refE(), getC());
             break;
         case 0x5a://LD E,D   4 cycles   - - - -
+            op_ld_r8_r8(refE(), getD());
             break;
         case 0x5b://LD E,E   4 cycles   - - - -
+            op_ld_r8_r8(refE(), getE());
             break;
         case 0x5c://LD E,H   4 cycles   - - - -
+            op_ld_r8_r8(refE(), getH());
             break;
         case 0x5d://LD E,L   4 cycles   - - - -
+            op_ld_r8_r8(refE(), getL());
             break;
         case 0x5e://LD E,(HL)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refE(), getHL());
             break;
         case 0x5f://LD E,A   4 cycles   - - - -
+            op_ld_r8_r8(refE(), getA());
             break;
         case 0x60://LD H,B   4 cycles   - - - -
+            op_ld_r8_r8(refH(), getB());
             break;
         case 0x61://LD H,C   4 cycles   - - - -
+            op_ld_r8_r8(refH(), getC());
             break;
         case 0x62://LD H,D   4 cycles   - - - -
+            op_ld_r8_r8(refH(), getD());
             break;
         case 0x63://LD H,E   4 cycles   - - - -
+            op_ld_r8_r8(refH(), getE());
             break;
         case 0x64://LD H,H   4 cycles   - - - -
+            op_ld_r8_r8(refH(), getH());
             break;
         case 0x65://LD H,L   4 cycles   - - - -
+            op_ld_r8_r8(refH(), getL());
             break;
         case 0x66://LD H,(HL)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refH(), getHL());
             break;
         case 0x67://LD H,A   4 cycles   - - - -
+            op_ld_r8_r8(refH(), getA());
             break;
         case 0x68://LD L,B   4 cycles   - - - -
+            op_ld_r8_r8(refL(), getB());
             break;
         case 0x69://LD L,C   4 cycles   - - - -
+            op_ld_r8_r8(refL(), getC());
             break;
         case 0x6a://LD L,D   4 cycles   - - - -
+            op_ld_r8_r8(refL(), getD());
             break;
         case 0x6b://LD L,E   4 cycles   - - - -
+            op_ld_r8_r8(refL(), getE());
             break;
         case 0x6c://LD L,H   4 cycles   - - - -
+            op_ld_r8_r8(refL(), getH());
             break;
         case 0x6d://LD L,L   4 cycles   - - - -
+            op_ld_r8_r8(refL(), getL());
             break;
         case 0x6e://LD L,(HL)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refL(), getHL());
             break;
         case 0x6f://LD L,A   4 cycles   - - - -
+            op_ld_r8_r8(refL(), getA());
             break;
         case 0x70://LD (HL),B   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getB());
             break;
         case 0x71://LD (HL),C   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getC());
             break;
         case 0x72://LD (HL),D   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getD());
             break;
         case 0x73://LD (HL),E   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getE());
             break;
         case 0x74://LD (HL),H   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getH());
             break;
         case 0x75://LD (HL),L   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getL());
             break;
         case 0x76://HALT   4 cycles   - - - -
+            // TODO: INTERRUPTS.
+            addClockCounter(4);
             break;
         case 0x77://LD (HL),A   8 cycles   - - - -
+            op_ld_ptr_r16_r8(getHL(), getA());
             break;
         case 0x78://LD A,B   4 cycles   - - - -
+            op_ld_r8_r8(refA(), getB());
             break;
         case 0x79://LD A,C   4 cycles   - - - -
+            op_ld_r8_r8(refA(), getC());
             break;
         case 0x7a://LD A,D   4 cycles   - - - -
+            op_ld_r8_r8(refA(), getD());
             break;
         case 0x7b://LD A,E   4 cycles   - - - -
+            op_ld_r8_r8(refA(), getE());
             break;
         case 0x7c://LD A,H   4 cycles   - - - -
+            op_ld_r8_r8(refA(), getH());
             break;
         case 0x7d://LD A,L   4 cycles   - - - -
+            op_ld_r8_r8(refA(), getL());
             break;
         case 0x7e://LD A,(HL)   8 cycles   - - - -
+            op_ld_r8_ptr_r16(refA(), getHL());
             break;
         case 0x7f://LD A,A   4 cycles   - - - -
+            op_ld_r8_r8(refA(), getA());
             break;
         case 0x80://ADD A,B   4 cycles   Z 0 H C
+            op_add_a_r8(getB());
             break;
         case 0x81://ADD A,C   4 cycles   Z 0 H C
+            op_add_a_r8(getC());
             break;
         case 0x82://ADD A,D   4 cycles   Z 0 H C
+            op_add_a_r8(getD());
             break;
         case 0x83://ADD A,E   4 cycles   Z 0 H C
+            op_add_a_r8(getE());
             break;
         case 0x84://ADD A,H   4 cycles   Z 0 H C
+            op_add_a_r8(getH());
             break;
         case 0x85://ADD A,L   4 cycles   Z 0 H C
+            op_add_a_r8(getL());
             break;
         case 0x86://ADD A,(HL)   8 cycles   Z 0 H C
+        {
+            uint8_t mem = readByteMem(getHL());
+            calc_flags(getA() + mem, false);
+            setA(getA() + mem);
+            addClockCounter(8);
             break;
+        }
         case 0x87://ADD A,A   4 cycles   Z 0 H C
+            op_add_a_r8(getA());
             break;
         case 0x88://ADC A,B   4 cycles   Z 0 H C
+            op_adc_a_r8(getB());
             break;
         case 0x89://ADC A,C   4 cycles   Z 0 H C
+            op_adc_a_r8(getC());
             break;
         case 0x8a://ADC A,D   4 cycles   Z 0 H C
+            op_adc_a_r8(getD());
             break;
         case 0x8b://ADC A,E   4 cycles   Z 0 H C
+            op_adc_a_r8(getE());
             break;
         case 0x8c://ADC A,H   4 cycles   Z 0 H C
+            op_adc_a_r8(getH());
             break;
         case 0x8d://ADC A,L   4 cycles   Z 0 H C
+            op_adc_a_r8(getL());
             break;
         case 0x8e://ADC A,(HL)   8 cycles   Z 0 H C
+        {
+            uint8_t mem = readByteMem(getHL());
+            uint8_t carry = getFlag(FLAG_C);
+            calc_flags(getA() + mem + carry, false);
+            setA(getA() + mem + carry);
+            addClockCounter(8);
             break;
+        }
         case 0x8f://ADC A,A   4 cycles   Z 0 H C
+            op_adc_a_r8(getA());
             break;
         case 0x90://SUB B   4 cycles   Z 1 H C
+            op_sub_a_r8(getB());
             break;
         case 0x91://SUB C   4 cycles   Z 1 H C
+            op_sub_a_r8(getC());
             break;
         case 0x92://SUB D   4 cycles   Z 1 H C
+            op_sub_a_r8(getD());
             break;
         case 0x93://SUB E   4 cycles   Z 1 H C
+            op_sub_a_r8(getE());
             break;
         case 0x94://SUB H   4 cycles   Z 1 H C
+            op_sub_a_r8(getH());
             break;
         case 0x95://SUB L   4 cycles   Z 1 H C
+            op_sub_a_r8(getL());
             break;
         case 0x96://SUB (HL)   8 cycles   Z 1 H C
+        {
+            uint8_t mem = readByteMem(getHL());
+            calc_flags(getA() - mem, true);
+            setA(getA() - mem);
+            addClockCounter(8);
             break;
+        }
         case 0x97://SUB A   4 cycles   Z 1 H C
+            op_sub_a_r8(getA());
             break;
         case 0x98://SBC A,B   4 cycles   Z 1 H C
+            op_sbc_a_r8(getB());
             break;
         case 0x99://SBC A,C   4 cycles   Z 1 H C
+            op_sbc_a_r8(getC());
             break;
         case 0x9a://SBC A,D   4 cycles   Z 1 H C
+            op_sbc_a_r8(getD());
             break;
         case 0x9b://SBC A,E   4 cycles   Z 1 H C
+            op_sbc_a_r8(getE());
             break;
         case 0x9c://SBC A,H   4 cycles   Z 1 H C
+            op_sbc_a_r8(getH());
             break;
         case 0x9d://SBC A,L   4 cycles   Z 1 H C
+            op_sbc_a_r8(getL());
             break;
         case 0x9e://SBC A,(HL)   8 cycles   Z 1 H C
+        {
+            uint8_t mem = readByteMem(getHL());
+            uint8_t carry = getFlag(FLAG_C);
+            calc_flags(getA() - mem - carry, true);
+            setA(getA() - mem - carry);
+            addClockCounter(8);
             break;
+        }
         case 0x9f://SBC A,A   4 cycles   Z 1 H C
+            op_sbc_a_r8(getA());
             break;
         case 0xa0://AND B   4 cycles   Z 0 1 0
+            op_and_a_r8(getB());
             break;
         case 0xa1://AND C   4 cycles   Z 0 1 0
+            op_and_a_r8(getC());
             break;
         case 0xa2://AND D   4 cycles   Z 0 1 0
+            op_and_a_r8(getD());
             break;
         case 0xa3://AND E   4 cycles   Z 0 1 0
+            op_and_a_r8(getE());
             break;
         case 0xa4://AND H   4 cycles   Z 0 1 0
+            op_and_a_r8(getH());
             break;
         case 0xa5://AND L   4 cycles   Z 0 1 0
+            op_and_a_r8(getL());
             break;
         case 0xa6://AND (HL)   8 cycles   Z 0 1 0
+        {
+            uint8_t mem = readByteMem(getHL());
+            resetFlag(FLAG_N | FLAG_C);
+            setFlag(FLAG_H);
+            setA(getA() & mem);
+            setFlagCond(FLAG_Z, getA() == 0);
+            addClockCounter(8);
             break;
+        }
         case 0xa7://AND A   4 cycles   Z 0 1 0
+            op_and_a_r8(getA());
             break;
         case 0xa8://XOR B   4 cycles   Z 0 0 0
+            op_xor_a_r8(getB());
             break;
         case 0xa9://XOR C   4 cycles   Z 0 0 0
+            op_xor_a_r8(getC());
             break;
         case 0xaa://XOR D   4 cycles   Z 0 0 0
+            op_xor_a_r8(getD());
             break;
         case 0xab://XOR E   4 cycles   Z 0 0 0
+            op_xor_a_r8(getE());
             break;
         case 0xac://XOR H   4 cycles   Z 0 0 0
+            op_xor_a_r8(getH());
             break;
         case 0xad://XOR L   4 cycles   Z 0 0 0
+            op_xor_a_r8(getL());
             break;
         case 0xae://XOR (HL)   8 cycles   Z 0 0 0
+        {
+            uint8_t mem = readByteMem(getHL());
+            resetFlag(FLAG_N | FLAG_C | FLAG_H);
+            setA(getA() ^ mem);
+            setFlagCond(FLAG_Z, getA() == 0);
+            addClockCounter(8);
             break;
+        }
         case 0xaf://XOR A   4 cycles   Z 0 0 0
+            op_xor_a_r8(getA());
             break;
         case 0xb0://OR B   4 cycles   Z 0 0 0
+            op_or_a_r8(getB());
             break;
         case 0xb1://OR C   4 cycles   Z 0 0 0
+            op_or_a_r8(getC());
             break;
         case 0xb2://OR D   4 cycles   Z 0 0 0
+            op_or_a_r8(getD());
             break;
         case 0xb3://OR E   4 cycles   Z 0 0 0
+            op_or_a_r8(getE());
             break;
         case 0xb4://OR H   4 cycles   Z 0 0 0
+            op_or_a_r8(getH());
             break;
         case 0xb5://OR L   4 cycles   Z 0 0 0
+            op_or_a_r8(getL());
             break;
         case 0xb6://OR (HL)   8 cycles   Z 0 0 0
+        {
+            uint8_t mem = readByteMem(getHL());
+            resetFlag(FLAG_N | FLAG_C | FLAG_H);
+            setA(getA() | mem);
+            setFlagCond(FLAG_Z, getA() == 0);
+            addClockCounter(8);
             break;
+        }
         case 0xb7://OR A   4 cycles   Z 0 0 0
+            op_or_a_r8(getA());
             break;
         case 0xb8://CP B   4 cycles   Z 1 H C
+            op_cp_a_r8(getB());
             break;
         case 0xb9://CP C   4 cycles   Z 1 H C
+            op_cp_a_r8(getC());
             break;
         case 0xba://CP D   4 cycles   Z 1 H C
+            op_cp_a_r8(getD());
             break;
         case 0xbb://CP E   4 cycles   Z 1 H C
+            op_cp_a_r8(getE());
             break;
         case 0xbc://CP H   4 cycles   Z 1 H C
+            op_cp_a_r8(getH());
             break;
         case 0xbd://CP L   4 cycles   Z 1 H C
+            op_cp_a_r8(getL());
             break;
         case 0xbe://CP (HL)   8 cycles   Z 1 H C
+        {
+            uint8_t mem = readByteMem(getHL());
+            calc_flags(getA() - mem, true);
+            addClockCounter(8);
             break;
+        }
         case 0xbf://CP A   4 cycles   Z 1 H C
+            op_cp_a_r8(getA());
             break;
         case 0xc0://RET NZ   20/8 cycles   - - - -
+            op_ret_cond(getFlag(FLAG_Z) == 0);
             break;
         case 0xc1://POP BC   12 cycles   - - - -
+            //TODO:  NO UNDERLINE FROM HERE.
+            op_pop_r16(refBC());
             break;
         case 0xc2://JP NZ,a16   16/12 cycles   - - - -
             break;
