@@ -19,7 +19,7 @@ Z80::Z80(unique_ptr<BasicMemory> memory) {
 }
 
 void Z80::executeNextOpcode() {
-    uint8_t opcode = bus->receiveByte(((*refCP())++));
+    uint8_t opcode = readByteMem((*refCP())++);
     executeOpcode(opcode);
 }
 
@@ -179,6 +179,43 @@ void Z80::op_jr_cond_nn(bool cond) {
         incCP();
         addClockCounter(8);
     }
+}
+
+void Z80::op_jp_cond_nn(bool cond) {
+    if (cond) {
+        uint16_t word = readWordMem(getCP());
+        setCP(word);
+        addClockCounter(16);
+    }
+    else {
+        incCP();
+        addClockCounter(12);
+    }
+}
+
+void Z80::op_call_cond_nn(bool cond) {
+    if (cond) {
+        (*refSP())--;
+        (*refSP())--;
+        uint16_t word = readWordMem(getCP());
+        incCP();
+        incCP();    // Next instruction is 2 bytes along.
+        writeWordMem(getSP(), getCP()); // Save CP in stack
+        setCP(word);
+        addClockCounter(24);
+    }else {
+        incCP();
+        incCP();
+        addClockCounter(12);
+    }
+}
+
+void Z80::op_rst_n(uint8_t address) {
+    (*refSP())--;
+    (*refSP())--;
+    writeWordMem(getSP(), getCP());
+    setCP(address);
+    addClockCounter(16);
 }
 
 void Z80::executeOpcode(uint8_t opcode) {
@@ -455,7 +492,7 @@ void Z80::executeOpcode(uint8_t opcode) {
             op_ld_r8_d8(refA());
             break;
         case 0x3f://CCF   4 cycles   - 0 0 C
-            resetFlag(FLAG_N |FLAG_H);
+            resetFlag(FLAG_N | FLAG_H);
             setFlagCond(FLAG_C, getFlag(FLAG_C) == 0);
             addClockCounter(4);
             break;
@@ -897,128 +934,321 @@ void Z80::executeOpcode(uint8_t opcode) {
             op_pop_r16(refBC());
             break;
         case 0xc2://JP NZ,a16   16/12 cycles   - - - -
+            op_jp_cond_nn(getFlag(FLAG_Z) == 0);
             break;
         case 0xc3://JP a16   16 cycles   - - - -
+        {
+            uint8_t word = readByteMem(getCP());
+            setCP(word);
+            addClockCounter(16);
             break;
+        }
         case 0xc4://CALL NZ,a16   24/12 cycles   - - - -
+            op_call_cond_nn(getFlag(FLAG_Z) == 0);
             break;
         case 0xc5://PUSH BC   16 cycles   - - - -
+            op_push_r16(getBC());
             break;
         case 0xc6://ADD A,d8   8 cycles   Z 0 H C
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            calc_flags(getA() + mem, false);
+            setA(getA() + mem);
+            addClockCounter(8);
             break;
+        }
         case 0xc7://RST 00H   16 cycles   - - - -
+            op_rst_n(0x00);
             break;
         case 0xc8://RET Z   20/8 cycles   - - - -
+            op_ret_cond(getFlag(FLAG_Z));
             break;
         case 0xc9://RET   16 cycles   - - - -
+        {
+            uint16_t word = readWordMem(getSP());
+            (*refSP())++;
+            (*refSP())++;
+            setCP(word);
+            addClockCounter(16);
             break;
+        }
         case 0xca://JP Z,a16   16/12 cycles   - - - -
+            op_jp_cond_nn(getFlag(FLAG_C));
             break;
         case 0xcb://PREFIX CB   4 cycles   - - - -
+            // TODO: CB Table. Do when finish that.
+            addClockCounter(4);
             break;
         case 0xcc://CALL Z,a16   24/12 cycles   - - - -
+            op_call_cond_nn(getFlag(FLAG_Z));
             break;
         case 0xcd://CALL a16   24 cycles   - - - -
+        {
+            (*refSP())--;
+            (*refSP())--;
+            uint16_t word = readWordMem(getCP());
+            incCP();
+            incCP();    // Next instruction is 2 bytes along.
+            writeWordMem(getSP(), getCP()); // Save CP in stack
+            setCP(word);
+            addClockCounter(24);
             break;
+        }
         case 0xce://ADC A,d8   8 cycles   Z 0 H C
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            uint8_t carry = getFlag(FLAG_C);
+            calc_flags(getA() + mem + carry, false);
+            setA(getA() + mem + carry);
+            addClockCounter(8);
             break;
+        }
         case 0xcf://RST 08H   16 cycles   - - - -
+            op_rst_n(0x08);
             break;
         case 0xd0://RET NC   20/8 cycles   - - - -
+            op_ret_cond(getFlag(FLAG_C) == 0);
             break;
         case 0xd1://POP DE   12 cycles   - - - -
+            op_pop_r16(refDE());
             break;
         case 0xd2://JP NC,a16   16/12 cycles   - - - -
+            op_jp_cond_nn(getFlag(FLAG_C) == 0);
             break;
         case 0xd3: // unused
+            op_unused();
             break;
         case 0xd4://CALL NC,a16   24/12 cycles   - - - -
+            op_call_cond_nn(getFlag(FLAG_C) == 0);
             break;
         case 0xd5://PUSH DE   16 cycles   - - - -
+            op_push_r16(getDE());
             break;
         case 0xd6://SUB d8   8 cycles   Z 1 H C
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            calc_flags(getA() - mem, true);
+            setA(getA() - mem);
+            addClockCounter(8);
             break;
+        }
         case 0xd7://RST 10H   16 cycles   - - - -
+            op_rst_n(0x10);
             break;
         case 0xd8://RET C   20/8 cycles   - - - -
+            op_ret_cond(getFlag(FLAG_C));
             break;
         case 0xd9://RETI   16 cycles   - - - -
+            setCP(readWordMem(getSP()));
+            (*refSP())++;
+            (*refSP())++;   // Read word from SP => 2 inc.
+            addClockCounter(20);
+            // TODO: ENABLE INTERRUPTS
+            addClockCounter(16);
             break;
         case 0xda://JP C,a16   16/12 cycles   - - - -
+            op_jp_cond_nn(getFlag(FLAG_C));
             break;
         case 0xdb: // unused
+            op_unused();
             break;
         case 0xdc://CALL C,a16   24/12 cycles   - - - -
+            op_call_cond_nn(getFlag(FLAG_C));
             break;
         case 0xdd: // unused
+            op_unused();
             break;
         case 0xde://SBC A,d8   8 cycles   Z 1 H C
+        {
+            uint8_t mem = readByteMem(getCP());
+            uint8_t carry = getFlag(FLAG_C);
+            calc_flags(getA() - mem - carry, true);
+            setA(getA() - mem - carry);
+            addClockCounter(8);
             break;
+        }
         case 0xdf://RST 18H   16 cycles   - - - -
+            op_rst_n(0x18);
             break;
-        case 0xe0://LDH (a8),A   12 cycles   - - - -
+        case 0xe0://LDH (0xFF00 + nn),A   12 cycles   - - - -
+        {
+            uint16_t mem = (uint16_t) 0xFF00 + readByteMem(getCP());
+            incCP();
+            writeByteMem(mem, getA());
+            addClockCounter(12);
             break;
+        }
         case 0xe1://POP HL   12 cycles   - - - -
+            op_pop_r16(refHL());
             break;
-        case 0xe2://LD (C),A   8 cycles   - - - -
+        case 0xe2://LD (0xFF00 + C),A   8 cycles   - - - -
+        {
+            writeByteMem((uint16_t) 0xFF00 + getC(), getA());
+            addClockCounter(8);
             break;
+        }
         case 0xe3: // unused
+            op_unused();
             break;
         case 0xe4: // unused
+            op_unused();
             break;
         case 0xe5://PUSH HL   16 cycles   - - - -
+            op_push_r16(getHL());
             break;
         case 0xe6://AND d8   8 cycles   Z 0 1 0
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            resetFlag(FLAG_N | FLAG_C);
+            setFlag(FLAG_H);
+            setA(getA() & mem);
+            setFlagCond(FLAG_Z, getA() == 0);
+            addClockCounter(8);
             break;
+        }
         case 0xe7://RST 20H   16 cycles   - - - -
+            op_rst_n(0x20);
             break;
         case 0xe8://ADD SP,r8   16 cycles   0 0 H C
+        {
+            int8_t mem = readByteMem(getCP());  // Signed
+            incCP();
+            int16_t result = getSP() + mem;
+
+            setFlagCond(FLAG_C, (result & 0x100) == 1);
+            setFlagCond(FLAG_H, (result & 0x08) == 1);
+            resetFlag(FLAG_N);
+            resetFlag(FLAG_Z);
+
+            setSP(getSP() + result);
+            addClockCounter(16);
             break;
+        }
         case 0xe9://JP (HL)   4 cycles   - - - -
+        {
+            setCP(getHL());
+            addClockCounter(4);
             break;
+        }
         case 0xea://LD (a16),A   16 cycles   - - - -
+        {
+            uint16_t val = readWordMem(getCP());
+            incCP();
+            incCP();
+            writeByteMem(val, getA());
+            addClockCounter(16);
             break;
+        }
         case 0xeb: // unused
+            op_unused();
             break;
         case 0xec: // unused
+            op_unused();
             break;
         case 0xed: // unused
+            op_unused();
             break;
         case 0xee://XOR d8   8 cycles   Z 0 0 0
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            resetFlag(FLAG_N | FLAG_C | FLAG_H);
+            setA(getA() ^ mem);
+            setFlagCond(FLAG_Z, getA() == 0);
+            addClockCounter(8);
             break;
+        }
         case 0xef://RST 28H   16 cycles   - - - -
+            op_rst_n(0x28);
             break;
-        case 0xf0://LDH A,(a8)   12 cycles   - - - -
+        case 0xf0://LDH A,(0xFF00 + n)   12 cycles   - - - -
+        {
+            uint8_t n = readByteMem(getCP());
+            incCP();
+            setA(readByteMem((uint16_t) (0xFF00 + n)));
+            addClockCounter(12);
             break;
+        }
         case 0xf1://POP AF   12 cycles   Z N H C
+            op_pop_r16(refAF());
             break;
-        case 0xf2://LD A,(C)   8 cycles   - - - -
+        case 0xf2://LD A,(0xFF00 + C)   8 cycles   - - - -
+            setA(readByteMem((uint16_t) (0xFF00 + getC())));
+            addClockCounter(8);
             break;
         case 0xf3://DI   4 cycles   - - - -
+            //TODO: DISABLE INTERRUPTS
+            addClockCounter(4);
             break;
         case 0xf4: // unused
+            op_unused();
             break;
         case 0xf5://PUSH AF   16 cycles   - - - -
+            op_push_r16(getAF());
             break;
         case 0xf6://OR d8   8 cycles   Z 0 0 0
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            resetFlag(FLAG_N | FLAG_C | FLAG_H);
+            setA(getA() | mem);
+            setFlagCond(FLAG_Z, getA() == 0);
+            addClockCounter(4);
             break;
+        }
         case 0xf7://RST 30H   16 cycles   - - - -
+            op_rst_n(0x30);
             break;
         case 0xf8://LD HL,SP+r8   12 cycles   0 0 H C
+        {
+            int8_t r8 = readByteMem(getCP());
+            incCP();
+            int16_t result = getSP() + r8;
+            setHL((uint16_t) result);
+            resetFlag(FLAG_Z | FLAG_N);
+
+            setFlagCond(FLAG_C, (result & 0x100) == 1);
+            setFlagCond(FLAG_H, (result & 0x08) == 1);
+            addClockCounter(12);
             break;
+        }
         case 0xf9://LD SP,HL   8 cycles   - - - -
+            setSP(getHL());
+            addClockCounter(8);
             break;
         case 0xfa://LD A,(a16)   16 cycles   - - - -
+        {
+            uint16_t mem = readWordMem(getCP());
+            incCP();
+            incCP();
+            setA(readByteMem(mem));
+            addClockCounter(16);
             break;
+        }
         case 0xfb://EI   4 cycles   - - - -
+            //TODO: ENABLE INTERRUPTS
+            addClockCounter(4);
             break;
         case 0xfc: // unused
+            op_unused();
             break;
         case 0xfd: // unused
+            op_unused();
             break;
         case 0xfe://CP d8   8 cycles   Z 1 H C
+        {
+            uint8_t mem = readByteMem(getCP());
+            incCP();
+            calc_flags(getA() - mem, true);
+            addClockCounter(4);
             break;
+        }
         case 0xff://RST 38H   16 cycles   - - - -
+            op_rst_n(0x38);
             break;
         default:
             printf("NOT POSSIBLE STAY HERE");

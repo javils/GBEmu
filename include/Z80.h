@@ -71,6 +71,12 @@ private:
     void op_jr_cond_nn(bool cond);
     void op_jp_cond_nn(bool cond);
 
+    void op_call_cond_nn(bool cond);
+    void op_rst_n(uint8_t address);
+
+    inline void op_unused() { } // TODO: The unused (-) opcodes will lock-up the gameboy CPU when used.
+
+
     // Helper functions to get the pointer. Only used internally.
     inline uint16_t *refCP() { return &(CP->val); }
     inline uint16_t *refSP() { return &(SP->val); }
