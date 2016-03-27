@@ -39,7 +39,7 @@ private:
 
     unique_ptr<Bus> bus;  //< Bus for the memory.
 
-    // Opcode functions
+    // Opcode helper functions
     void op_inc_8(uint8_t *reg);
     void op_inc_16(uint16_t *reg);
     void op_dec_8(uint8_t *reg);
@@ -74,7 +74,27 @@ private:
     void op_call_cond_nn(bool cond);
     void op_rst_n(uint8_t address);
 
+    // CB opcode helper functions.
+    void op_rlc_r(uint8_t* reg);
+    void op_rrc_r(uint8_t* reg);
+    void op_rl_r(uint8_t* reg);
+    void op_rr_r(uint8_t* reg);
+    void op_sla_r(uint8_t* reg);
+    void op_sra_r(uint8_t* reg);
+    void op_swap_r(uint8_t* reg);
+    void op_srl_r(uint8_t* reg);
+    void op_bit_n_r(uint8_t n, uint8_t reg);
+    void op_bit_n_ptr_HL(uint8_t n);
+    void op_res_n_r(uint8_t n, uint8_t *reg);
+    void op_res_n_ptr_HL(uint8_t n);
+    void op_set_n_r(uint8_t n, uint8_t *reg);
+    void op_set_n_ptr_HL(uint8_t n);
+
     inline void op_unused() { } // TODO: The unused (-) opcodes will lock-up the gameboy CPU when used.
+
+
+    void executeInstruction(uint8_t opcode);    //< Used for clean the Z80 file.
+    void executeCBInstruction(uint8_t bcopcode);
 
 
     // Helper functions to get the pointer. Only used internally.
