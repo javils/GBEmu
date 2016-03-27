@@ -25,3 +25,40 @@ TEST(CPUControlTests, NOP) {
     cpu->executeNextOpcode();
     LONGS_EQUAL(4, cpu->getClockCounter());
 }
+
+TEST(CPUControlTests, STOP) {
+    //STOP 0   4 cycles   - - - -
+    cpu->writeByteMem(0x0, 0x10);
+    cpu->executeNextOpcode();
+    //TODO : NOT IMPLEMENTED YET
+    FAIL("NOT IMPLEMENTED YET");
+}
+
+TEST(CPUControlTests, SCF) {
+    //SCF   4 cycles   - 0 0 1
+    cpu->writeByteMem(0x0, 0x37);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_C));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+}
+
+TEST(CPUControlTests, CCF) {
+    //CCF   4 cycles   - 0 0 C
+    cpu->writeByteMem(0x0, 0x3F);
+    cpu->setFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_C));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+
+    cpu->writeByteMem(0x1, 0x3F);
+    cpu->resetFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_C));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(8, cpu->getClockCounter());
+}

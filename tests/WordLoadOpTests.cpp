@@ -39,3 +39,33 @@ TEST(WordLoadOpcodeTests, LD_NN_SP) {
     LONGS_EQUAL(0x12, cpu->readWordMem(0x1234));
     LONGS_EQUAL(0x3, cpu->getCP());
 }
+
+TEST(WordLoadOpcodeTests, LD_DE_d16) {
+    //LD DE,d16   12 cycles
+    cpu->writeByteMem(0x0, 0x11);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getDE());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+    LONGS_EQUAL(0x3, cpu->getCP());
+}
+
+TEST(WordLoadOpcodeTests, LD_HL_d16) {
+    //LD HL,d16   12 cycles
+    cpu->writeByteMem(0x0, 0x21);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getHL());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+    LONGS_EQUAL(0x3, cpu->getCP());
+}
+
+TEST(WordLoadOpcodeTests, LD_SP_d16) {
+    //LD SP,d16   12 cycles
+    cpu->writeByteMem(0x0, 0x31);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getSP());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+    LONGS_EQUAL(0x3, cpu->getCP());
+}

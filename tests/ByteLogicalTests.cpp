@@ -140,3 +140,324 @@ TEST(ByteLogicalTests, DEC_C) {
     LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
     LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
 }
+
+TEST(ByteLogicalTests, INC_D) {
+    //INC D   4 cycles   Z 0 H -
+    cpu->writeByteMem(0x0, 0x14);
+    cpu->setFlag(FLAG_Z | FLAG_N);
+    cpu->setD(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x13, cpu->getD());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x14);
+    cpu->setD(0xFF);
+    cpu->resetFlag(FLAG_Z);
+    LONGS_EQUAL(0xFF, cpu->getD());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x0, cpu->getD());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, DEC_D) {
+    //DEC D   4 cycles   Z 1 H -
+    cpu->writeByteMem(0x0, 0x15);
+    cpu->setFlag(FLAG_Z);
+    cpu->setD(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x11, cpu->getD());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x15);
+    cpu->setD(0x00);
+    cpu->setFlag(FLAG_Z);
+    LONGS_EQUAL(0x00, cpu->getD());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0xFF, cpu->getD());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, INC_E) {
+    //INC E   4 cycles   Z 0 H -
+    cpu->writeByteMem(0x0, 0x1c);
+    cpu->setFlag(FLAG_Z | FLAG_N);
+    cpu->setE(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x13, cpu->getE());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x1c);
+    cpu->setE(0xFF);
+    cpu->resetFlag(FLAG_Z);
+    LONGS_EQUAL(0xFF, cpu->getE());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x0, cpu->getE());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, DEC_E) {
+    //DEC E   4 cycles   Z 1 H -
+    cpu->writeByteMem(0x0, 0x1d);
+    cpu->setFlag(FLAG_Z);
+    cpu->setE(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x11, cpu->getE());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x1d);
+    cpu->setE(0x00);
+    cpu->setFlag(FLAG_Z);
+    LONGS_EQUAL(0x00, cpu->getE());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0xFF, cpu->getE());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, INC_H) {
+    //INC H   4 cycles   Z 0 H -
+    cpu->writeByteMem(0x0, 0x24);
+    cpu->setFlag(FLAG_Z | FLAG_N);
+    cpu->setH(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x13, cpu->getH());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x24);
+    cpu->setH(0xFF);
+    cpu->resetFlag(FLAG_Z);
+    LONGS_EQUAL(0xFF, cpu->getH());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x0, cpu->getH());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, DEC_H) {
+    //DEC E   4 cycles   Z 1 H -
+    cpu->writeByteMem(0x0, 0x25);
+    cpu->setFlag(FLAG_Z);
+    cpu->setH(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x11, cpu->getH());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x25);
+    cpu->setH(0x00);
+    cpu->setFlag(FLAG_Z);
+    LONGS_EQUAL(0x00, cpu->getH());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0xFF, cpu->getH());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, INC_L) {
+    //INC L   4 cycles   Z 0 H -
+    cpu->writeByteMem(0x0, 0x2c);
+    cpu->setFlag(FLAG_Z | FLAG_N);
+    cpu->setL(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x13, cpu->getL());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x2c);
+    cpu->setL(0xFF);
+    cpu->resetFlag(FLAG_Z);
+    LONGS_EQUAL(0xFF, cpu->getL());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x0, cpu->getL());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, DEC_L) {
+    //DEC L   4 cycles   Z 1 H -
+    cpu->writeByteMem(0x0, 0x2d);
+    cpu->setFlag(FLAG_Z);
+    cpu->setL(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x11, cpu->getL());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x2d);
+    cpu->setL(0x00);
+    cpu->setFlag(FLAG_Z);
+    LONGS_EQUAL(0x00, cpu->getL());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0xFF, cpu->getL());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, CPL) {
+    //CPL   4 cycles   - 1 1 -
+    cpu->writeByteMem(0x0, 0x2f);
+    cpu->setA(0x01);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0xFE, cpu->getA());
+    LONGS_EQUAL(0x01, cpu->getCP());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+}
+
+
+TEST(ByteLogicalTests, INC_A) {
+    //INC A   4 cycles   Z 0 H -
+    cpu->writeByteMem(0x0, 0x3c);
+    cpu->setFlag(FLAG_Z | FLAG_N);
+    cpu->setA(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x13, cpu->getA());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x3c);
+    cpu->setA(0xFF);
+    cpu->resetFlag(FLAG_Z);
+    LONGS_EQUAL(0xFF, cpu->getA());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x0, cpu->getA());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, DEC_A) {
+    //DEC A   4 cycles   Z 1 H -
+    cpu->writeByteMem(0x0, 0x3d);
+    cpu->setFlag(FLAG_Z);
+    cpu->setA(0x12);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x11, cpu->getA());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+
+    cpu->writeByteMem(0x1, 0x3d);
+    cpu->setA(0x00);
+    cpu->setFlag(FLAG_Z);
+    LONGS_EQUAL(0x00, cpu->getA());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0xFF, cpu->getA());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}

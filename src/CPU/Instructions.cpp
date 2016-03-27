@@ -63,7 +63,6 @@ void Z80::executeInstruction(uint8_t opcode) {
         case 0xe://LD C,d8   8 cycles   - - - -
             op_ld_r8_d8(refC());
             break;
-            //TODO: TESTS HERE
         case 0xf://RRCA   4 cycles   0 0 0 C
             setFlagCond(FLAG_C, (getA() & 0x01) != 0);
             resetFlag(FLAG_Z | FLAG_H | FLAG_N);
@@ -94,9 +93,8 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         case 0x17://RLA   4 cycles   0 0 0 C
         {
-            //TODO: CHECK
             uint8_t c = getFlag(FLAG_C);
-            setFlagCond(FLAG_C, (getA() & 0x8) != 0);
+            setFlagCond(FLAG_C, (getA() & 0x80) != 0);
             resetFlag(FLAG_Z | FLAG_H | FLAG_N);
             setA((getA() << 1) | c);
             addClockCounter(4);
@@ -130,9 +128,8 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         case 0x1f://RRA   4 cycles   0 0 0 C
         {
-            // TODO: CHECK
             uint8_t c = getFlag(FLAG_C);
-            setFlagCond(FLAG_C, (getA() & 0x1) != 0);
+            setFlagCond(FLAG_C, (getA() & 0x01) != 0);
             resetFlag(FLAG_Z | FLAG_H | FLAG_N);
             setA((c << 7) | (getA() >> 1));
             addClockCounter(4);
@@ -162,7 +159,6 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         case 0x27://DAA   4 cycles   Z - 0 C
         {
-            // TODO: CHECK THIS VERY HARD.
             uint8_t correction = 0x0;
 
             if (getA() > 0x99 || getFlag(FLAG_C)) {

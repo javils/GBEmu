@@ -11,7 +11,8 @@ set(TEST_SRC
         WordLoadOpTests.cpp
         WordLogicalTests.cpp
         ByteLogicalTests.cpp
-        RotateShiftTests.cpp)
+        RotateShiftTests.cpp
+        JumTests.cpp)
 
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lCppUTest" )
 
