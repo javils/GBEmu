@@ -8,12 +8,28 @@
 TEST_GROUP(ByteLoadOpcodeTests){
     unique_ptr<Z80> cpu;
     unique_ptr<BasicMemory> mem;
+
+    uint8_t refs [8];
+
     void setup() {
         mem.reset(new Memory_DMG());
         cpu.reset(new Z80(move(mem)));
+
     }
 
     void teardown() {
+    }
+
+    void updateRefs(bool ptrHL) {
+        refs[0] = cpu->getB();
+        refs[1] = cpu->getC();
+        refs[2] = cpu->getD();
+        refs[3] = cpu->getE();
+        refs[4] = cpu->getH();
+        refs[5] = cpu->getL();
+        if (ptrHL)
+            refs[6] = cpu->readByteMem(cpu->getHL());
+        refs[7] = cpu->getA();
     }
 };
 
@@ -220,4 +236,40 @@ TEST(ByteLoadOpcodeTests, LD_A_d8) {
     LONGS_EQUAL(0x12, cpu->getA());
     LONGS_EQUAL(0x2, cpu->getCP());
     LONGS_EQUAL(8, cpu->getClockCounter());
+}
+
+TEST(ByteLoadOpcodeTests, LD_R1_R2) {
+    //LD B,B   4 cycles   - - - -
+    uint8_t counter = 0x40;
+    uint16_t addr = 0;
+    for(int i = 0; i < 8;i++) { // R1
+        for(int j = 0; j < 8;j++) {  //R2
+            // HALT
+            if (counter == 0x76) {
+                counter++;
+                addr++;
+                cpu->incCP();
+                continue;
+            }
+            cpu->writeByteMem(addr, counter);
+            cpu->setA(0x02);
+            cpu->setBC(0x1234);
+            cpu->setDE(0x5678);
+            cpu->setHL(0x9012);
+            cpu->writeByteMem(cpu->getHL(), 0x35);
+            cpu->executeNextOpcode();
+            // LD H,(HL)            LD L,(HL)
+            if (counter == 0x66 || counter == 0x6E) {
+                updateRefs(false);
+                refs[6] = cpu->readByteMem(0x9012);
+            }
+            else
+                updateRefs(true);
+            LONGS_EQUAL(refs[i], refs[j]);
+            counter++;
+            addr++;
+        }
+    }
+    LONGS_EQUAL(308, cpu->getClockCounter());
+
 }
