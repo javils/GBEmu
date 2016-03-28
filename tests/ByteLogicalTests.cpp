@@ -593,3 +593,125 @@ TEST(ByteLogicalTests, SBC_A_R) {
     }
     LONGS_EQUAL(36, cpu->getClockCounter());
 }
+
+TEST(ByteLogicalTests, AND_A_R) {
+    //AND A,R   4 cycles    Z 0 1 0
+    uint8_t counter = 0xa0;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->setFlag(FLAG_C);
+        cpu->writeByteMem(i, counter);
+        cpu->setA(0xCE);
+        cpu->setB(0x3);
+        cpu->setC(0x00);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        uint8_t result = (uint8_t) ((i != 7) ? 0xCE & refs[i] : refs[i]);
+        LONGS_EQUAL(result, cpu->getA());
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+        LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_C));
+        // Register C    check FLAGS
+        if (i == 1) {
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+        }
+        else {
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+        }
+
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(ByteLogicalTests, XOR_A_R) {
+    //XOR A,R   4 cycles    Z 0 0 0
+    uint8_t counter = 0xa8;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->writeByteMem(i, counter);
+        cpu->setA(0xCE);
+        cpu->setB(0x3);
+        cpu->setC(0x4);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        uint8_t result = (uint8_t) ((i != 7) ? 0xCE ^ refs[i] : refs[i]);
+        LONGS_EQUAL(result, cpu->getA());
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_C));
+        // Register A    check FLAGS
+        if (i == 7) {
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+        }
+        else {
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+        }
+
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(ByteLogicalTests, OR_A_R) {
+    //OR A,R   4 cycles    Z 0 0 0
+    uint8_t counter = 0xb0;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->writeByteMem(i, counter);
+        cpu->setA(0xCE);
+        cpu->setB(0x3);
+        cpu->setC(0x4);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        uint8_t result = (uint8_t) ((i != 7) ? 0xCE | refs[i] : refs[i]);
+        LONGS_EQUAL(result, cpu->getA());
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_C));
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(ByteLogicalTests, CP_A_R) {
+    //CP A,R   4 cycles    Z 1 H C
+    uint8_t counter = 0xb0;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->writeByteMem(i, counter);
+        cpu->setA(0xCE);
+        cpu->setB(0x3);
+        cpu->setC(0xCE);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        // Register C
+        if (i == 1) {
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_C));
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+        }
+
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
