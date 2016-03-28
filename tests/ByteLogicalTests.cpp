@@ -8,12 +8,26 @@
 TEST_GROUP(ByteLogicalTests){
     unique_ptr<Z80> cpu;
     unique_ptr<BasicMemory> mem;
+
+    uint8_t refs [8];
+
     void setup() {
         mem.reset(new Memory_DMG());
         cpu.reset(new Z80(move(mem)));
     }
 
     void teardown() {
+    }
+
+    void updateRefs() {
+        refs[0] = cpu->getB();
+        refs[1] = cpu->getC();
+        refs[2] = cpu->getD();
+        refs[3] = cpu->getE();
+        refs[4] = cpu->getH();
+        refs[5] = cpu->getL();
+        refs[6] = cpu->readByteMem(cpu->getHL());
+        refs[7] = cpu->getA();
     }
 };
 
@@ -460,4 +474,122 @@ TEST(ByteLogicalTests, DEC_A) {
     LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
     LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
     LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+}
+
+TEST(ByteLogicalTests, ADD_A_R) {
+    //ADD A,R   4 cycles   Z 0 H C
+    uint8_t counter = 0x80;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->writeByteMem(i, counter);
+        cpu->setA(0x2);
+        cpu->setB(0x3);
+        cpu->setC(0xFE);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        uint8_t result = (uint8_t) ((i != 7) ? 0x2 + refs[i] : refs[i]);
+        LONGS_EQUAL(result, cpu->getA());
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+        // Register C    check FLAGS
+        if (i == 1) {
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_C));
+        }
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(ByteLogicalTests, ADC_A_R) {
+    //ADD A,R   4 cycles   Z 0 H C
+    uint8_t counter = 0x88;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->writeByteMem(i, counter);
+        cpu->setFlag(FLAG_C);
+        cpu->setA(0x2);
+        cpu->setB(0x3);
+        cpu->setC(0xFD);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        uint8_t result = (uint8_t) ((i != 7) ? 0x3 + refs[i] : refs[i]);
+        LONGS_EQUAL(result, cpu->getA());
+        LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+        // Register C    check FLAGS
+        if (i == 1) {
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_Z));
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_C));
+        }
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(ByteLogicalTests, SUB_A_R) {
+    //SUB A,R   4 cycles   Z 1 H C
+    uint8_t counter = 0x90;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->writeByteMem(i, counter);
+        cpu->setA(0xCE);
+        cpu->setB(0x3);
+        cpu->setC(0xFE);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        uint8_t result = (uint8_t) ((i != 7) ? 0xCE - refs[i] : refs[i]);
+        LONGS_EQUAL(result, cpu->getA());
+        LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+        // Register C    check FLAGS
+        if (i == 1) {
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_C));
+        }
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(ByteLogicalTests, SBC_A_R) {
+    //SBC A,R   4 cycles   Z 1 H C
+    uint8_t counter = 0x98;
+    for(uint16_t i = 0; i < 8; i++) {
+        cpu->setFlag(FLAG_C);
+        cpu->writeByteMem(i, counter);
+        cpu->setA(0xCE);
+        cpu->setB(0x3);
+        cpu->setC(0xFE);
+        cpu->setD(0x5);
+        cpu->setE(0x6);
+        cpu->setH(0x7);
+        cpu->setL(0x8);
+        cpu->writeByteMem(cpu->getHL(), 0x6);
+        cpu->executeNextOpcode();
+        updateRefs();
+        uint8_t result = (uint8_t) ((i != 7) ? 0xCD - refs[i] : refs[i]);
+        LONGS_EQUAL(result, cpu->getA());
+        LONGS_EQUAL(1, cpu->getFlag(FLAG_N));
+        // Register C    check FLAGS
+        if (i == 1) {
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+            LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+            LONGS_EQUAL(1, cpu->getFlag(FLAG_C));
+        }
+        counter++;
+    }
+    LONGS_EQUAL(36, cpu->getClockCounter());
 }
