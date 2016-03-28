@@ -725,7 +725,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         case 0xc3://JP a16   16 cycles   - - - -
         {
-            uint8_t word = readByteMem(getCP());
+            uint16_t word = readWordMem(getCP());
             setCP(word);
             addClockCounter(16);
             break;
@@ -761,7 +761,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         }
         case 0xca://JP Z,a16   16/12 cycles   - - - -
-            op_jp_cond_nn(getFlag(FLAG_C));
+            op_jp_cond_nn(getFlag(FLAG_Z));
             break;
         case 0xcb://PREFIX CB   4 cycles   - - - -
         {
@@ -2065,6 +2065,7 @@ void Z80::op_jp_cond_nn(bool cond) {
         addClockCounter(16);
     }
     else {
+        incCP();
         incCP();
         addClockCounter(12);
     }

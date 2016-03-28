@@ -69,3 +69,25 @@ TEST(WordLoadOpcodeTests, LD_SP_d16) {
     LONGS_EQUAL(12, cpu->getClockCounter());
     LONGS_EQUAL(0x3, cpu->getCP());
 }
+
+TEST(WordLoadOpcodeTests, POP_BC) {
+    //POP BC   12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xc1);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(0x9EEE, 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EF0, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->getBC());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+}
+
+TEST(WordLoadOpcodeTests, PUSH_BC) {
+    //PUSH BC   16 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xc5);
+    cpu->setSP(0x9EEE);
+    cpu->setBC(0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}

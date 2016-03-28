@@ -715,3 +715,28 @@ TEST(ByteLogicalTests, CP_A_R) {
     }
     LONGS_EQUAL(36, cpu->getClockCounter());
 }
+
+TEST(ByteLogicalTests, ADD_A_N) {
+    //ADD A,N   8 cycles   Z 0 H C
+    cpu->writeByteMem(0x00, 0xC6);
+    cpu->writeByteMem(0x01, 0x04);
+    cpu->setA(0x2);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x6, cpu->getA());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_C));
+
+    cpu->writeByteMem(0x02, 0xC6);
+    cpu->writeByteMem(0x03, 0x0F);
+    cpu->setA(0xFE);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0xD, cpu->getA());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(1, cpu->getFlag(FLAG_C));
+
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
