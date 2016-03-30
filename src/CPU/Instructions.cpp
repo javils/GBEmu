@@ -1242,7 +1242,7 @@ void Z80::executeCBInstruction(uint8_t cbopcode) {
             mem = (b7 << 7) | mem >> 1;
             writeByteMem(getHL(), mem);
             setFlagCond(FLAG_Z, mem == 0);
-            addClockCounter(8);
+            addClockCounter(16);
             break;
         }
         case 0x2f://SRA A   8 cycles   Z 0 0 0
