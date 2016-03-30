@@ -271,5 +271,81 @@ TEST(ByteLoadOpcodeTests, LD_R1_R2) {
         }
     }
     LONGS_EQUAL(308, cpu->getClockCounter());
+}
 
+TEST(ByteLoadOpcodeTests, LD_PTR_a8_A) {
+    //LDH (FF00 + a8),A   12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xE0);
+    cpu->writeByteMem(0x1, 0x12);
+    cpu->setA(0x12);
+    LONGS_EQUAL(0, cpu->readByteMem(0xFF00 + 0x12));
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x12, cpu->getA());
+    LONGS_EQUAL(2, cpu->getCP());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+    LONGS_EQUAL(0x12, cpu->readByteMem(0xFF00 + 0x12));
+}
+
+TEST(ByteLoadOpcodeTests, LD_PTR_C_A) {
+    //LDH (FF00 + C),A   8 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xE2);
+    cpu->setC(0x12);
+    cpu->setA(0x12);
+    LONGS_EQUAL(0, cpu->readByteMem(0xFF00 + cpu->getC()));
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x12, cpu->getA());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x12, cpu->readByteMem(0xFF00 + cpu->getC()));
+}
+
+TEST(ByteLoadOpcodeTests, LD_PTR_NN_A) {
+    //LD (NN),A   16 cycles
+    cpu->writeByteMem(0x0, 0xEA);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->setA(0x12);
+    LONGS_EQUAL(0, cpu->readByteMem(0x1234));
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x12, cpu->getA());
+    LONGS_EQUAL(3, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+    LONGS_EQUAL(0x12, cpu->readByteMem(0x1234));
+}
+
+TEST(ByteLoadOpcodeTests, LD_A_PTR_a8) {
+    //LDH A,(FF00 + a8)   12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xF0);
+    cpu->writeByteMem(0x1, 0x12);
+    cpu->writeByteMem(0xFF12, 0x20);
+    LONGS_EQUAL(0x0, cpu->getA());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x20, cpu->getA());
+    LONGS_EQUAL(2, cpu->getCP());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+    LONGS_EQUAL(0x20, cpu->readByteMem(0xFF00 + 0x12));
+}
+
+TEST(ByteLoadOpcodeTests, LD_A_PTR_C) {
+    //LDH A,(FF00 + C)   8 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xF2);
+    cpu->setC(0x12);
+    cpu->writeByteMem(0xFF12, 0x20);
+    LONGS_EQUAL(0x0, cpu->getA());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x20, cpu->getA());
+    LONGS_EQUAL(1, cpu->getCP());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x20, cpu->readByteMem(0xFF00 + 0x12));
+}
+
+TEST(ByteLoadOpcodeTests, LD_A_PTR_a16) {
+    //LD A,(a16)   16 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xFA);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->writeByteMem(0x1234, 0x20);
+    LONGS_EQUAL(0x0, cpu->getA());
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x20, cpu->getA());
+    LONGS_EQUAL(3, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
 }

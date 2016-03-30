@@ -159,7 +159,7 @@ TEST(JumpTests, CALL_NZ_NN) {
     LONGS_EQUAL(36, cpu->getClockCounter());
 }
 
-TEST(JumpTests, RST_N) {
+TEST(JumpTests, RST_00) {
     //RST 00H   16 cycles   - - - -
     cpu->writeByteMem(0x2, 0xC7);
     cpu->setCP(0x2);
@@ -236,7 +236,7 @@ TEST(JumpTests, CALL_Z_NN) {
 
 TEST(JumpTests, CALL_NN) {
     //CALL a16   24 cycles   - - - -
-    cpu->writeByteMem(0x0, 0xC4);
+    cpu->writeByteMem(0x0, 0xCD);
     cpu->writeWordMem(0x1, 0x1234);
     cpu->setSP(0x9E04);
     cpu->executeNextOpcode();
@@ -244,4 +244,218 @@ TEST(JumpTests, CALL_NN) {
     LONGS_EQUAL(0x9E02, cpu->getSP());
     LONGS_EQUAL(0x03, cpu->readWordMem(cpu->getSP()));
     LONGS_EQUAL(24, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RST_08) {
+    //RST 08H   16 cycles   - - - -
+    cpu->writeByteMem(0x2, 0xCF);
+    cpu->setCP(0x2);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x3, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(0x8, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RET_NC) {
+    //RET NC   20/8 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xD0);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->resetFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EF0, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(20, cpu->getClockCounter());
+}
+
+TEST(JumpTests, JP_NC_NN) {
+    //JP NC,a16   16/12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xD2);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->resetFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+
+    cpu->writeByteMem((uint16_t) (cpu->getCP()), 0xD2);
+    cpu->writeWordMem((uint16_t) (cpu->getCP() + 0x1), 0x5678);
+    cpu->setFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1237, cpu->getCP());
+    LONGS_EQUAL(28, cpu->getClockCounter());
+}
+
+TEST(JumpTests, CALL_NC_NN) {
+    //CALL NC,a16   24/12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xD4);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->resetFlag(FLAG_C);
+    cpu->setSP(0x9E04);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(0x9E02, cpu->getSP());
+    LONGS_EQUAL(0x03, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(24, cpu->getClockCounter());
+
+    cpu->writeByteMem(0x1234, 0xD4);
+    cpu->writeWordMem(0x1235, 0x4567);
+    cpu->setFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1237, cpu->getCP());
+    LONGS_EQUAL(0x9E02, cpu->getSP());
+    LONGS_EQUAL(0x03, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RST_10) {
+    //RST 10H   16 cycles   - - - -
+    cpu->writeByteMem(0x2, 0xD7);
+    cpu->setCP(0x2);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x3, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(0x10, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RET_C) {
+    //RET C   20/8 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xD8);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->setFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EF0, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(20, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RETI) {
+    //RETI   16 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xD9);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EF0, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+    FAIL("INTERRUPTS NOT IMPLEMENTED YET");
+}
+
+TEST(JumpTests, JP_C_NN) {
+    //JP C,a16   16/12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xDA);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->setFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+
+    cpu->writeByteMem((uint16_t) (cpu->getCP()), 0xDA);
+    cpu->writeWordMem((uint16_t) (cpu->getCP() + 0x1), 0x5678);
+    cpu->resetFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1237, cpu->getCP());
+    LONGS_EQUAL(28, cpu->getClockCounter());
+}
+
+TEST(JumpTests, CALL_C_NN) {
+    //CALL C,a16   24/12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xDC);
+    cpu->writeWordMem(0x1, 0x1234);
+    cpu->setFlag(FLAG_C);
+    cpu->setSP(0x9E04);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(0x9E02, cpu->getSP());
+    LONGS_EQUAL(0x03, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(24, cpu->getClockCounter());
+
+    cpu->writeByteMem(0x1234, 0xDC);
+    cpu->writeWordMem(0x1235, 0x4567);
+    cpu->resetFlag(FLAG_C);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1237, cpu->getCP());
+    LONGS_EQUAL(0x9E02, cpu->getSP());
+    LONGS_EQUAL(0x03, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(36, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RST_18) {
+    //RST 18H   16 cycles   - - - -
+    cpu->writeByteMem(0x2, 0xDF);
+    cpu->setCP(0x2);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x3, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(0x18, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RST_20) {
+    //RST 20H   16 cycles   - - - -
+    cpu->writeByteMem(0x2, 0xE7);
+    cpu->setCP(0x2);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x3, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(0x20, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(JumpTests, JP_PTR_HL) {
+    //JP HL   4 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xE9);
+    cpu->setHL(0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getCP());
+    LONGS_EQUAL(4, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RST_28) {
+    //RST 28H   16 cycles   - - - -
+    cpu->writeByteMem(0x2, 0xEF);
+    cpu->setCP(0x2);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x3, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(0x28, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RST_30) {
+    //RST 30H   16 cycles   - - - -
+    cpu->writeByteMem(0x2, 0xF7);
+    cpu->setCP(0x2);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x3, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(0x30, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(JumpTests, RST_38) {
+    //RST 30H   16 cycles   - - - -
+    cpu->writeByteMem(0x2, 0xFF);
+    cpu->setCP(0x2);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(cpu->getSP(), 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x3, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(0x38, cpu->getCP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
 }

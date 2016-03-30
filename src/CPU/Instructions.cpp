@@ -836,7 +836,6 @@ void Z80::executeInstruction(uint8_t opcode) {
             setCP(readWordMem(getSP()));
             (*refSP())++;
             (*refSP())++;   // Read word from SP => 2 inc.
-            addClockCounter(20);
             // TODO: ENABLE INTERRUPTS
             addClockCounter(16);
             break;
@@ -855,6 +854,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         case 0xde://SBC A,d8   8 cycles   Z 1 H C
         {
             uint8_t mem = readByteMem(getCP());
+            incCP();
             uint8_t carry = getFlag(FLAG_C);
             calc_flags(getA(), mem - carry, true);
             setA(getA() - mem - carry);
@@ -915,11 +915,11 @@ void Z80::executeInstruction(uint8_t opcode) {
             resetFlag(FLAG_N);
             resetFlag(FLAG_Z);
 
-            setSP(getSP() + result);
+            setSP((uint16_t) result);
             addClockCounter(16);
             break;
         }
-        case 0xe9://JP (HL)   4 cycles   - - - -
+        case 0xe9://JP HL   4 cycles   - - - -
         {
             setCP(getHL());
             addClockCounter(4);
@@ -1035,7 +1035,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             uint8_t mem = readByteMem(getCP());
             incCP();
             calc_flags(getA(),mem, true);
-            addClockCounter(4);
+            addClockCounter(8);
             break;
         }
         case 0xff://RST 38H   16 cycles   - - - -
@@ -1954,7 +1954,7 @@ void Z80::op_ld_ptr_r16_r8(uint16_t reg16, uint8_t reg8) {
 void Z80::calc_flags(uint8_t a, uint8_t b, bool sub) {
     uint16_t result = !sub ? a + b : a - b;
     uint8_t lb = (uint8_t) (!sub ? ((a & 0x0F) + (b & 0x0F)) : ((a & 0x0F) - (b & 0x0F)));
-    setFlagCond(FLAG_C, (result & 0x100) != 0);
+    setFlagCond(FLAG_C, (result & 0x100) != 0); // Number greater than unsigned 8 bits
     setFlagCond(FLAG_H, (lb & 0x10) != 0);
     setFlagCond(FLAG_N, sub);
     setFlagCond(FLAG_Z, ((uint8_t)result) == 0);

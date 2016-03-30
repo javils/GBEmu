@@ -165,3 +165,17 @@ TEST(WordLogicalTests, DEC_SP) {
     LONGS_EQUAL(8, cpu->getClockCounter());
     LONGS_EQUAL(0x1, cpu->getCP());
 }
+
+TEST(WordLogicalTests, ADD_SP_R8) {
+    //ADD SP,r8   16 cycles   0 0 H C
+    cpu->writeByteMem(0x0, 0xE8);
+    cpu->writeByteMem(0x1, 0x04);
+    cpu->setSP(0x2);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x6, cpu->getSP());
+    LONGS_EQUAL(16, cpu->getClockCounter());
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(0, cpu->getFlag(FLAG_C));
+}

@@ -91,3 +91,94 @@ TEST(WordLoadOpcodeTests, PUSH_BC) {
     LONGS_EQUAL(0x1234, cpu->readWordMem(cpu->getSP()));
     LONGS_EQUAL(16, cpu->getClockCounter());
 }
+
+TEST(WordLoadOpcodeTests, POP_DE) {
+    //POP DE   12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xD1);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(0x9EEE, 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EF0, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->getDE());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+}
+
+TEST(WordLoadOpcodeTests, PUSH_DE) {
+    //PUSH DE   16 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xD5);
+    cpu->setSP(0x9EEE);
+    cpu->setDE(0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(WordLoadOpcodeTests, POP_HL) {
+    //POP HL   12 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xE1);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(0x9EEE, 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EF0, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->getHL());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+}
+
+TEST(WordLoadOpcodeTests, PUSH_HL) {
+    //PUSH HL   16 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xE5);
+    cpu->setSP(0x9EEE);
+    cpu->setHL(0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(WordLoadOpcodeTests, POP_AF) {
+    //POP AF   12 cycles   Z N H C
+    cpu->writeByteMem(0x0, 0xF1);
+    cpu->setSP(0x9EEE);
+    cpu->writeWordMem(0x9EEE, 0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EF0, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->getAF());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+}
+
+TEST(WordLoadOpcodeTests, PUSH_AF) {
+    //PUSH AF   16 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xF5);
+    cpu->setSP(0x9EEE);
+    cpu->setAF(0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x9EEC, cpu->getSP());
+    LONGS_EQUAL(0x1234, cpu->readWordMem(cpu->getSP()));
+    LONGS_EQUAL(16, cpu->getClockCounter());
+}
+
+TEST(WordLoadOpcodeTests, LD_HL_SP_PLUS_d16) {
+    //LD HL,SP+r8   12 cycles   0 0 H C
+    cpu->writeByteMem(0x0, 0xF8);
+    cpu->writeByteMem(0x1, 0x12);
+    cpu->setSP(0x4567);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x4579, cpu->getHL());
+    LONGS_EQUAL(12, cpu->getClockCounter());
+    LONGS_EQUAL(0x2, cpu->getCP());
+    LONGS_EQUAL(0x0, cpu->getFlag(FLAG_Z));
+    LONGS_EQUAL(0x0, cpu->getFlag(FLAG_N));
+    LONGS_EQUAL(0x0, cpu->getFlag(FLAG_H));
+    LONGS_EQUAL(0x0, cpu->getFlag(FLAG_C));
+}
+
+TEST(WordLoadOpcodeTests, LD_SP_HL) {
+    //LD SP,HL   8 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xF9);
+    cpu->setHL(0x1234);
+    cpu->executeNextOpcode();
+    LONGS_EQUAL(0x1234, cpu->getSP());
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(0x1, cpu->getCP());
+}

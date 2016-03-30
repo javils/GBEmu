@@ -62,3 +62,19 @@ TEST(CPUControlTests, CCF) {
     LONGS_EQUAL(0, cpu->getFlag(FLAG_H));
     LONGS_EQUAL(8, cpu->getClockCounter());
 }
+
+TEST(CPUControlTests, DI) {
+    //DI   4 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xF3);
+    cpu->executeNextOpcode();
+    //TODO : NOT IMPLEMENTED YET
+    FAIL("INTERRUPTS NOT IMPLEMENTED YET");
+}
+
+TEST(CPUControlTests, EI) {
+    //EI   4 cycles   - - - -
+    cpu->writeByteMem(0x0, 0xFB);
+    cpu->executeNextOpcode();
+    //TODO : NOT IMPLEMENTED YET
+    FAIL("INTERRUPTS NOT IMPLEMENTED YET");
+}
