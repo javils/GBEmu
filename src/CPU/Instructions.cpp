@@ -1839,7 +1839,7 @@ void Z80::executeCBInstruction(uint8_t cbopcode) {
             op_set_n_r(5, refA());
             break;
         case 0xf0://SET 6,B   8 cycles   - - - -
-            op_set_n_r(2, refB());
+            op_set_n_r(6, refB());
             break;
         case 0xf1://SET 6,C   8 cycles   - - - -
             op_set_n_r(6, refC());
@@ -2174,7 +2174,7 @@ void Z80::op_bit_n_ptr_HL(uint8_t n) {
     resetFlag(FLAG_N);
     setFlag(FLAG_H);
     setFlagCond(FLAG_Z, (readByteMem(getHL()) & (1 << n)) != 0);
-    addClockCounter(12);
+    addClockCounter(16);
 }
 
 void Z80::op_res_n_r(uint8_t n, uint8_t *reg) {
