@@ -70,7 +70,12 @@ void Z80::executeInstruction(uint8_t opcode) {
             addClockCounter(4);
             break;
         case 0x10://STOP 0   4 cycles   - - - -
-            //TODO : INTERRUPTS HERE
+            if (readByteMem(getCP()) != 0x00)  // STOP must be following by 00
+            {
+                //TODO: PRINTF ERROR OR SOMETHING.
+            }
+            incCP();
+            cpuStatus = STOP;
             addClockCounter(4);
             break;
         case 0x11://LD DE,d16   12 cycles   - - - -
@@ -447,7 +452,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             op_ld_ptr_r16_r8(getHL(), getL());
             break;
         case 0x76://HALT   4 cycles   - - - -
-            // TODO: INTERRUPTS.
+            cpuStatus = HALT;
             addClockCounter(4);
             break;
         case 0x77://LD (HL),A   8 cycles   - - - -
@@ -836,7 +841,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             setCP(readWordMem(getSP()));
             (*refSP())++;
             (*refSP())++;   // Read word from SP => 2 inc.
-            // TODO: ENABLE INTERRUPTS
+            InterruptMasterEnable = true;
             addClockCounter(16);
             break;
         case 0xda://JP C,a16   16/12 cycles   - - - -
@@ -972,7 +977,8 @@ void Z80::executeInstruction(uint8_t opcode) {
             addClockCounter(8);
             break;
         case 0xf3://DI   4 cycles   - - - -
-            //TODO: DISABLE INTERRUPTS
+            EIExecuted = false;
+            InterruptMasterEnable = false;
             addClockCounter(4);
             break;
         case 0xf4: // unused
@@ -1021,7 +1027,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         }
         case 0xfb://EI   4 cycles   - - - -
-            //TODO: ENABLE INTERRUPTS
+            EIExecuted = true;
             addClockCounter(4);
             break;
         case 0xfc: // unused
@@ -1742,7 +1748,7 @@ void Z80::executeCBInstruction(uint8_t cbopcode) {
         case 0xcf://SET 1,A   8 cycles   - - - -
             op_set_n_r(1, refA());
             break;
-        case 0xd0://SET 2,B   8 cycles   - - - -    // TODO: HERE
+        case 0xd0://SET 2,B   8 cycles   - - - -
             op_set_n_r(2, refB());
             break;
         case 0xd1://SET 2,C   8 cycles   - - - -

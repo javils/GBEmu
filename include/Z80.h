@@ -25,6 +25,12 @@ typedef enum {
     FLAG_0 = 0x01,  //< Unused
 } FLAGS_T;
 
+typedef enum {
+    HALT = 0,
+    STOP,
+    NORMAL
+} CPUStatus;
+
 class Z80 {
 private:
     unique_ptr<reg_t> AF;   //< AF register 16bits
@@ -38,6 +44,10 @@ private:
     uint16_t cpu_clock_counter; //< Clock counter
 
     unique_ptr<Bus> bus;  //< Bus for the memory.
+
+    bool InterruptMasterEnable; //< IME
+    bool EIExecuted;    //< the next opcode following EI not have interruptions.
+    CPUStatus cpuStatus;    //< Status of the cpu. @see CPUStatus
 
     // Opcode helper functions
     void op_inc_8(uint8_t *reg);
@@ -203,6 +213,8 @@ public:
     void executeNextOpcode();
 
     void executeOpcode(uint8_t opcode); //< Used for debugging and tests.
+
+    void step();
 
 };
 

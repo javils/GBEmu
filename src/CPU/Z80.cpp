@@ -26,3 +26,17 @@ void Z80::executeNextOpcode() {
 void Z80::executeOpcode(uint8_t opcode) {
     executeInstruction(opcode); // Do that for clean this file.
 }
+
+void Z80::step(){
+
+    bool isEIafter = EIExecuted;
+    if (cpuStatus == HALT) {
+        addClockCounter(4); //< Maintain memory refresh logic.
+    } else {
+        executeNextOpcode();
+    }
+
+    // If this condition is true imply that EI and the next instruction was executed
+    if (isEIafter && EIExecuted)
+        InterruptMasterEnable = true;
+}
