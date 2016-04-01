@@ -16,6 +16,9 @@ Z80::Z80(unique_ptr<BasicMemory> memory) {
     bus.reset(new Bus());   // Init pointer.
     bus->connectToMemory(move(memory)); // Connect bus with memory.
     cpu_clock_counter = 0;
+    InterruptMasterEnable = false;
+    EIExecuted = false;
+    cpuStatus = NORMAL;
 }
 
 void Z80::executeNextOpcode() {

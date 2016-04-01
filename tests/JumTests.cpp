@@ -344,7 +344,7 @@ TEST(JumpTests, RETI) {
     LONGS_EQUAL(0x9EF0, cpu->getSP());
     LONGS_EQUAL(0x1234, cpu->getCP());
     LONGS_EQUAL(16, cpu->getClockCounter());
-    FAIL("INTERRUPTS NOT IMPLEMENTED YET");
+    LONGS_EQUAL(true, cpu->areInterruptsEnabled());
 }
 
 TEST(JumpTests, JP_C_NN) {

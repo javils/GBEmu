@@ -26,12 +26,12 @@ TEST(CPUControlTests, NOP) {
     LONGS_EQUAL(4, cpu->getClockCounter());
 }
 
-TEST(CPUControlTests, STOP) {
+TEST(CPUControlTests, STOP_OP) {
     //STOP 0   4 cycles   - - - -
     cpu->writeByteMem(0x0, 0x10);
     cpu->executeNextOpcode();
-    //TODO : NOT IMPLEMENTED YET
-    FAIL("NOT IMPLEMENTED YET");
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(STOP, cpu->getStatus());
 }
 
 TEST(CPUControlTests, SCF) {
@@ -63,18 +63,37 @@ TEST(CPUControlTests, CCF) {
     LONGS_EQUAL(8, cpu->getClockCounter());
 }
 
+TEST(CPUControlTests, HALT_OP) {
+    //HALT N*4   4 cycles   - - - -
+    cpu->writeByteMem(0x0, 0x76);
+    cpu->writeByteMem(0x1, 0x76);
+    cpu->writeByteMem(0x2, 0x76);
+    cpu->step();
+    LONGS_EQUAL(4, cpu->getClockCounter());
+    LONGS_EQUAL(HALT, cpu->getStatus());
+    cpu->step();
+    LONGS_EQUAL(8, cpu->getClockCounter());
+    LONGS_EQUAL(HALT, cpu->getStatus());
+    cpu->requestInterrupt(VBLANK_INT);
+    cpu->writeByteMem(0xFFFF, VBLANK_INT);  // Enable VBLANKINT
+    cpu->step();
+    LONGS_EQUAL(12, cpu->getClockCounter());
+    LONGS_EQUAL(NORMAL, cpu->getStatus());
+}
+
 TEST(CPUControlTests, DI) {
     //DI   4 cycles   - - - -
     cpu->writeByteMem(0x0, 0xF3);
     cpu->executeNextOpcode();
-    //TODO : NOT IMPLEMENTED YET
-    FAIL("INTERRUPTS NOT IMPLEMENTED YET");
+    LONGS_EQUAL(false, cpu->areInterruptsEnabled());
 }
 
 TEST(CPUControlTests, EI) {
     //EI   4 cycles   - - - -
     cpu->writeByteMem(0x0, 0xFB);
-    cpu->executeNextOpcode();
-    //TODO : NOT IMPLEMENTED YET
-    FAIL("INTERRUPTS NOT IMPLEMENTED YET");
+    cpu->writeByteMem(0x1, 0x00);
+    cpu->step();
+    LONGS_EQUAL(false, cpu->areInterruptsEnabled());
+    cpu->step();
+    LONGS_EQUAL(true, cpu->areInterruptsEnabled());
 }

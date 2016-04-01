@@ -180,6 +180,8 @@ public:
 
     inline uint8_t getFlag(FLAGS_T flag) { return (uint8_t) ((getF() & flag) != 0); }
     inline uint16_t getClockCounter() { return cpu_clock_counter; }
+    inline CPUStatus getStatus() { return cpuStatus; }
+    inline bool areInterruptsEnabled() { return InterruptMasterEnable; }
 
     // Setters
     inline void setCP(uint16_t value) { CP->val = value; }
