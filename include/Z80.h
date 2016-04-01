@@ -31,6 +31,15 @@ typedef enum {
     NORMAL
 } CPUStatus;
 
+typedef enum {
+    NONE_INT = 0x0,         //< No interrupts
+    VBLANK_INT = 0x1,       //< VBLANK interrupt (40h)
+    LCD_STAT_INT = 0x2,     //< LCD STAT interrupt (48h)
+    TIMER_INT = 0x4,        //< TIMER interrupt (50h)
+    SERIAL_INT = 0x8,       //< SERIAL interrupt (58h)
+    JOYPAD_INT = 0x10       //< JOYPAD interrupt (60h)
+} Interrupts;
+
 class Z80 {
 private:
     unique_ptr<reg_t> AF;   //< AF register 16bits
@@ -102,9 +111,29 @@ private:
 
     inline void op_unused() { } // TODO: The unused (-) opcodes will lock-up the gameboy CPU when used.
 
-
+    /**
+     * Execute normal opcode.
+     * @param opcode opcode to be executed.
+     */
     void executeInstruction(uint8_t opcode);    //< Used for clean the Z80 file.
-    void executeCBInstruction(uint8_t bcopcode);
+
+    /**
+     * Execute extended opcode (CB Opcodes)
+     * @param cbopcode opcode to be executed.
+     */
+    void executeCBInstruction(uint8_t cbopcode);
+
+    /**
+     * Get the next interruption to be executed.
+     * @return the interrupt to be executed.
+     */
+    Interrupts pendingInterruption();
+
+    /**
+     * Execute the interrupt procedure.
+     * @param interrupt interrupt to be executed.
+     */
+    void executeInterrupt(Interrupts interrupt);
 
 
     // Helper functions to get the pointer. Only used internally.
@@ -210,10 +239,26 @@ public:
      */
     inline uint16_t readWordMem(uint16_t address) { return bus->receiveWord(address); }
 
+    /**
+     * Execute next opcode in the memory.
+     */
     void executeNextOpcode();
 
+    /**
+     * Execute a opcode.
+     * @param opcode opcode to be executed.
+     */
     void executeOpcode(uint8_t opcode); //< Used for debugging and tests.
 
+    /**
+     * Resquest an interrupt to be executed next step.
+     * @interrupt interrupt to be requested
+     */
+    void requestInterrupt(Interrupts interrupt);
+
+    /**
+     * Set of the CPU.
+     */
     void step();
 
 };
