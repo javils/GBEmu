@@ -138,7 +138,7 @@ bool Cartridge::CartridgeHeader::fillData() {
     globalChecksum = (getByte(0x014E) << 8) | getByte(0x014F);
 
     printf("%s", title.c_str());
-    return checkChecksum();
+    return checkChecksum() && checkNintendoLogo();
 }
 
 uint8_t Cartridge::CartridgeHeader::getByte(uint16_t address) {
@@ -146,10 +146,10 @@ uint8_t Cartridge::CartridgeHeader::getByte(uint16_t address) {
 }
 
 vector<uint8_t> Cartridge::CartridgeHeader::getBytes(uint16_t addressInit, uint16_t addressEnd) {
-    uint16_t size = addressEnd - addressInit;
+    uint16_t size = (uint16_t) ((addressEnd + 1) - addressInit);
     vector<uint8_t> result(size);
     uint16_t index = 0;
-    for (uint16_t i = addressInit; i < addressEnd; i++) {
+    for (uint16_t i = addressInit; i < addressEnd + 1; i++) {
         result[index] = getByte(i);
         index++;
     }
@@ -164,5 +164,9 @@ bool Cartridge::CartridgeHeader::checkChecksum(){
     }
 
     return sum == checksum;
+}
+
+bool Cartridge::CartridgeHeader::checkNintendoLogo() {
+    return nintendoLogo == logo;
 }
 
