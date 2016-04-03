@@ -36,6 +36,7 @@ public:
     bool loadRom(std::string fileName);
 
     // Getters
+    inline vector<uint8_t> getROM() { return ROM; }
     inline string getTitle() { return header->getTitle(); }
     inline uint8_t getGBMode() { return header->getGBMode(); }
     inline uint8_t getSGBMode() { return header->getSGBMode(); }

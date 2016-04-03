@@ -9,7 +9,7 @@ find_package(JAVA REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS})
 
 # Use last C++ standard
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14" )
 
 # Organice the files. Binaries and library.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
