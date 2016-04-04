@@ -87,10 +87,30 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
     selectedRAMBank = 0;
     selectedROMBank = 0;
     ramEnabled = false;
-    //TODO: Select MBC here.
+
+    selectMBC(cartrigdeType);
 }
 
-void MemoryDMG::setByte(uint16_t address, uint8_t value) {};
+void MemoryDMG::selectMBC(Cartridge::CartrigdeType cartridgeType) {
+    switch(cartridgeType) {
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_NO_MBC:
+            break;
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC1:
+            break;
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC2:
+            break;
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC3:
+            break;
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC5:
+            break;
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_MMM01:
+            break;
+        default:
+            //TODO: Throw exception?
+            break;
+    }
+};
+
 void MemoryDMG::setWord(uint16_t address, uint16_t value) {};
 
 uint8_t MemoryDMG::getByte(uint16_t address) { return 0;};
