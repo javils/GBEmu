@@ -111,6 +111,64 @@ void MemoryDMG::selectMBC(Cartridge::CartrigdeType cartridgeType) {
     }
 };
 
+void MemoryDMG::setByte(uint16_t address, uint8_t value) {
+    switch(address & 0xF000) {
+        case 0x0000:    // ROM
+        case 0x1000:
+        case 0x2000:
+        case 0x3000:
+        case 0x4000:
+        case 0x5000:
+        case 0x6000:
+        case 0x7000:
+            mbc->writeByte(address, value);
+            break;
+        case 0x8000:    // VIDEO
+        case 0x9000:
+            VideoRAM[address - 0x8000] = value;
+            break;
+        case 0xA000:    // External RAM
+        case 0xB000:
+            mbc->writeByte(address, value);
+            break;
+        case 0xC000:    // Work RAM
+        case 0xD000:
+            WorkRAM[address - 0xC000] = value;
+            if (address < 0xDE00)   //TODO: Do that of call setByte function recursively?
+                EchoRam[address - 0xC000] = value;
+            break;
+        case 0xE000:    // Echo RAM
+            EchoRam[address - 0xE000] = value;
+            WorkRAM[address - 0xE000] = value;
+            break;
+        case 0xF000:
+            if (address < 0xFE00) {
+                EchoRam[address - 0xE000] = value;
+                WorkRAM[address - 0xE000] = value;
+            } else if (address < 0xFEA0) {
+                OAMRam[address - 0xFE00] = value;
+            } else if (address > 0xFEFF && address < 0xFF4C) {
+                //TODO: Write IO REG. At the moment only modify the value of the IO, but probably we need do more things
+                IOPorts[address - 0xFF00] = value;
+            } else if (address > 0xFF7F && address < 0xFFFF) {
+                HRAM[address - 0xFF80] = value;
+            } else if (address == 0xFFFF) {
+                IERegister = value;
+            }
+            else {
+                /**
+                 * TODO: Add Exception here
+                 * If we are here the game use the Not Usable memory so
+                 * printf or throw something
+                 */
+            }
+            break;
+        default:
+            // Imposible stay here, throw exception or something
+            break;
+    }
+};
+
 void MemoryDMG::setWord(uint16_t address, uint16_t value) {};
 
 uint8_t MemoryDMG::getByte(uint16_t address) { return 0;};
