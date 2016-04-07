@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 #include <functional>
+#include <array>
+#include <vector>
 
 #include <random>
 
@@ -37,6 +39,9 @@ public:
     inline void setNumROMBanks(uint8_t banks) { numROMBanks = banks; }
     inline void setNumRAMBanks(uint8_t banks) { numRAMBanks = banks; }
 
+    inline uint8_t getMBCMode() { return mbcMode; }
+    inline void setMBCMode(uint8_t mode) { mbcMode = mode; }
+
 
     //< Helper function to fill memory with random values.
     auto fillRandom(){
@@ -49,6 +54,15 @@ public:
         return bind(dist,mt);
     }
 
+    // All the gameboys (DMG, SGB, CGB) have this memory map in common.
+    array<uint8_t, 0x4000> ROMBase;             //< 0x0000 to 0x3FFF 16KB
+    vector<array<uint8_t, 0x4000>> ROMBanks;    //< 0x4000 to 0x7FFF 16KB
+    array<uint8_t, 0x2000> VideoRAM;            //< 0x8000 to 0x9FFF 8KB
+    vector<array<uint8_t, 0x2000>> RAMBanks;    //< 0xA000 to 0xBFFF 8KB
+    array<uint8_t, 0x2000> WorkRAM;             //< 0xC000 to 0xDFFF 8KB
+    array<uint8_t, 0x1E00> EchoRam;             //< 0xE000 to 0xFDFF    (ECHO RAM of 0xC000 - 0xDDFF)
+    array<uint8_t, 0xA0> OAMRam;                //< 0xFE00 to 0xFE9F
+
 private:
     bool RAMEnabled;
 
@@ -57,6 +71,8 @@ private:
 
     uint8_t selectedROMBank;    //< Current selected ROM bank.
     uint8_t selectedRAMBank;    //< Current selected RAM bank.
+
+    uint8_t mbcMode;            //< MBC Mode 0 => ROM, 1 => RAM
 
 };
 

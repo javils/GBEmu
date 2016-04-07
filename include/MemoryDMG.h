@@ -80,14 +80,7 @@ public:
         IE =    0xFFFF,         //< Interrupt Enable
     };
 private:
-    array<uint8_t, 0x4000> ROMBase;             //< 0x0000 to 0x3FFF 16KB
-    vector<array<uint8_t, 0x4000>> ROMBanks;    //< 0x4000 to 0x7FFF 16KB
-    array<uint8_t, 0x2000> VideoRAM;            //< 0x8000 to 0x9FFF 8KB
-    vector<array<uint8_t, 0x2000>> RAMBanks;    //< 0xA000 to 0xBFFF 8KB
-    array<uint8_t, 0x2000> WorkRAM;             //< 0xC000 to 0xDFFF 8KB
-    array<uint8_t, 0x1E00> EchoRam;             //< 0xE000 to 0xFDFF    (ECHO RAM of 0xC000 - 0xDDFF)
-    array<uint8_t, 0xA0> OAMRam;                //< 0xFE00 to 0xFE9F
-                                                //< 0xFEA0 to 0xFEFF    NOT USABLE MEM
+    // This memory is special for DMG
     array<uint8_t, 0x4D> IOPorts;               //< 0xFF00 to 0xFF4B
                                                 //< 0xFF4C to 0xFF7F    NOT USABLE MEM
     array<uint8_t, 0x80> HRAM;                  //< 0xFF80 to 0xFFFE
