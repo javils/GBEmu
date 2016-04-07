@@ -5,7 +5,6 @@
 #ifndef GBEMU_MEMORYDMG_H
 #define GBEMU_MEMORYDMG_H
 
-#include <random>
 #include <vector>
 #include <array>
 #include <stdint.h>
@@ -94,14 +93,6 @@ private:
     array<uint8_t, 0x80> HRAM;                  //< 0xFF80 to 0xFFFE
     uint8_t IERegister;                         //< 0xFFFF  Interrupt Enable Register
 
-    uint8_t numROMBanks;
-    uint8_t numRAMBanks;
-
-    uint8_t selectedROMBank;    //< Current selected ROM bank.
-    uint8_t selectedRAMBank;    //< Current selected RAM bank.
-
-    bool ramEnabled;
-
     unique_ptr<MemoryBankController> mbc;
     vector<uint8_t> ROM;
 
@@ -112,10 +103,6 @@ private:
     inline uint8_t getIOReg(IOREGS regIO) { return IOPorts[regIO - 0xFF00]; }
 
     void selectMBC(Cartridge::CartrigdeType cartridgeType);
-
-    //< Helper function to fill memory with random values.
-    auto fillRandom();
-
 public:
     MemoryDMG(vector<uint8_t> ROM, uint8_t numROMBanks, uint8_t numRAMBanks, Cartridge::CartrigdeType cartrigdeType);
 

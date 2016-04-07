@@ -5,10 +5,16 @@
 #ifndef GBEMU_MEMORY_H
 #define GBEMU_MEMORY_H
 
+#include <stdint.h>
+#include <functional>
+
+#include <random>
+
 /**
  * Abstract class used to implement memories.
  * This class have the basic methods that all memories need to have to work.
  */
+using namespace std;
 
 class BasicMemory {
 public:
@@ -16,6 +22,42 @@ public:
     virtual uint8_t getByte(uint16_t address) = 0;
     virtual void setWord(uint16_t address, uint16_t word) = 0;
     virtual uint16_t getWord(uint16_t address) = 0;
+
+    inline void enableRAM(bool enable) { RAMEnabled = enable; }
+    inline bool isRAMEnabled() { return RAMEnabled; }
+
+    inline uint8_t getSelectedRAMBank() { return selectedRAMBank; }
+    inline void setSelectedRAMBank(uint8_t ramBank) { selectedRAMBank = ramBank; }
+    inline uint8_t getSelectedROMBank() { return selectedROMBank; }
+    inline void setSelectedROMBank(uint8_t romBank) { selectedROMBank = romBank; }
+
+    inline uint8_t getNumROMBanks() { return numROMBanks; }
+    inline uint8_t getNumRAMBanks() { return numRAMBanks; }
+
+    inline void setNumROMBanks(uint8_t banks) { numROMBanks = banks; }
+    inline void setNumRAMBanks(uint8_t banks) { numRAMBanks = banks; }
+
+
+    //< Helper function to fill memory with random values.
+    auto fillRandom(){
+        random_device rd;
+        mt19937 mt(rd());
+        uniform_int_distribution<uint8_t > dist(
+                numeric_limits<uint8_t>::min(),
+                numeric_limits<uint8_t>::max());
+
+        return bind(dist,mt);
+    }
+
+private:
+    bool RAMEnabled;
+
+    uint8_t numROMBanks;
+    uint8_t numRAMBanks;
+
+    uint8_t selectedROMBank;    //< Current selected ROM bank.
+    uint8_t selectedRAMBank;    //< Current selected RAM bank.
+
 };
 
 /**

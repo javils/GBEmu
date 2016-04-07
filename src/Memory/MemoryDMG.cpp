@@ -6,21 +6,11 @@
 
 MemoryDMG::MemoryDMG(vector<uint8_t> ROM, uint8_t numROMBanks, uint8_t numRAMBanks, Cartridge::CartrigdeType cartrigdeType){
     this->ROM = ROM;
-    this->numROMBanks = numROMBanks;
-    this->numRAMBanks = numRAMBanks;
+    setNumROMBanks(numROMBanks);
+    setNumRAMBanks(numRAMBanks);
     this->cartrigdeType = cartrigdeType;
 
     init(cartrigdeType);
-}
-
-auto MemoryDMG::fillRandom(){
-    random_device rd;
-    mt19937 mt(rd());
-    uniform_int_distribution<uint8_t > dist(
-            numeric_limits<uint8_t>::min(),
-            numeric_limits<uint8_t>::max());
-
-    return std::bind(dist,mt);
 }
 
 void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
@@ -29,9 +19,9 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
     copy_n(ROM.begin(), 0x4000, ROMBase.begin());
 
     //< Init switchable ROM banks. The first bank is in 0x4000
-    if ((numROMBanks - 1) > 0) {
-        ROMBanks.resize((uint8_t) (numROMBanks - 1));
-        for (uint8_t i = 1; i < numROMBanks; i++)
+    if ((getNumROMBanks() - 1) > 0) {
+        ROMBanks.resize((uint8_t) (getNumROMBanks() - 1));
+        for (uint8_t i = 1; i < getNumROMBanks(); i++)
             copy_n((ROM.begin() + 0x4000 * i), 0x4000, ROMBanks[i - 1].begin());
     }
 
@@ -39,8 +29,8 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
     VideoRAM.fill(0x00);
 
     //< Init RAM banks
-    RAMBanks.resize(numRAMBanks);
-    for(uint8_t i = 0; i < numRAMBanks; i++)
+    RAMBanks.resize(getNumRAMBanks());
+    for(uint8_t i = 0; i < getNumRAMBanks(); i++)
         generate(RAMBanks[i].begin(), RAMBanks[i].end(), fillRandom());
 
     //< Init WorkRAM and copy into EchoRam
@@ -89,9 +79,9 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
     setIOReg(WX, 0x00);
     IERegister = 0x00;
 
-    selectedRAMBank = 0;
-    selectedROMBank = 0;
-    ramEnabled = false;
+    setSelectedROMBank(0);
+    setSelectedRAMBank(0);
+    enableRAM(false);
 
     selectMBC(cartrigdeType);
 }
@@ -191,7 +181,7 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
         case 0x5000:
         case 0x6000:
         case 0x7000:
-            return ROMBanks[selectedROMBank][address - 0x4000];
+            return ROMBanks[getSelectedROMBank()][address - 0x4000];
         case 0x8000:
         case 0x9000:
             return VideoRAM[address - 0x8000];
