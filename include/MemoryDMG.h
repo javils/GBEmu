@@ -105,6 +105,8 @@ private:
     unique_ptr<MemoryBankController> mbc;
     vector<uint8_t> ROM;
 
+    Cartridge::CartrigdeType cartrigdeType;
+
     // Setter and Getter IOREGS
     inline void setIOReg(IOREGS regIO, uint8_t value) { IOPorts[regIO - 0xFF00] = value; }
     inline uint8_t getIOReg(IOREGS regIO) { return IOPorts[regIO - 0xFF00]; }
@@ -115,7 +117,7 @@ private:
     auto fillRandom();
 
 public:
-    MemoryDMG(vector<uint8_t> ROM, uint8_t numROMBanks, uint8_t numRAMBanks);
+    MemoryDMG(vector<uint8_t> ROM, uint8_t numROMBanks, uint8_t numRAMBanks, Cartridge::CartrigdeType cartrigdeType);
 
     void init(Cartridge::CartrigdeType cartrigdeType);
 

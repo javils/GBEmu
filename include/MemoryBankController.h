@@ -5,11 +5,14 @@
 #ifndef GBEMU_MEMORYBANKCONTROLLER_H
 #define GBEMU_MEMORYBANKCONTROLLER_H
 
+#include "Memory.h"
+
+class BasicMemory;
 class MemoryBankController {
 public:
     MemoryBankController(BasicMemory *memory) : memory(memory) {};
     virtual void writeByte(uint16_t address, uint8_t value) = 0;
-    virtual void readByte(uint16_t address) = 0;
+    virtual uint8_t readByte(uint16_t address) = 0;
 private:
     BasicMemory *memory;
 };

@@ -9,7 +9,7 @@ set(SRC_SOURCE_FILES CPU/Z80.cpp
         Memory/Cartridge.cpp)
 
 # Build library using header and source files.
-add_library(GBEmu SHARED ${SRC_SOURCE_FILES})
+add_library(GBEmu SHARED ${SRC_SOURCE_FILES} ${GLOBAL_INC_FILES})
 
 # Prepare library to Java Native Interface (JNI)
 if(APPLE)
