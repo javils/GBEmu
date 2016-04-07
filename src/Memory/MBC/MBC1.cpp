@@ -1,7 +1,7 @@
 //
 // Created by Javier Luque Sanabria on 7/4/16.
 //
-#include <MBC1.h>
+#include <MBCs.h>
 
 void MBC1::writeByte(uint16_t address, uint8_t value) {
     switch (address & 0xF000) {

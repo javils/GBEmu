@@ -2,7 +2,7 @@
 // Created by Javier Luque Sanabria on 31/3/16.
 //
 
-#include <MBC1.h>
+#include <MBCs.h>
 #include "MemoryDMG.h"
 
 MemoryDMG::MemoryDMG(vector<uint8_t> ROM, uint8_t numROMBanks, uint8_t numRAMBanks, Cartridge::CartrigdeType cartrigdeType){
@@ -91,11 +91,14 @@ void MemoryDMG::selectMBC(Cartridge::CartrigdeType cartridgeType) {
     switch(cartridgeType) {
         case Cartridge::CartrigdeType::CARTRIDGETYPE_NO_MBC:
         {
-            mbc.reset(new MBC1(this));
+            mbc.reset(new NOMBC(this));
             break;
         }
         case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC1:
+        {
+            mbc.reset(new MBC1(this));
             break;
+        }
         case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC2:
             break;
         case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC3:

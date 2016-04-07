@@ -7,6 +7,21 @@
 #ifndef GBEMU_MBC1_H
 #define GBEMU_MBC1_H
 
+/**
+ * No Memory Bank Controller
+ */
+class NOMBC : public MemoryBankController {
+
+public:
+    NOMBC(BasicMemory *memory) : MemoryBankController(memory) { }
+
+    inline void writeByte(uint16_t address, uint8_t value) {};
+    inline uint8_t readByte(uint16_t address){ return 0xFF; };
+};
+
+/**
+ * Memory Bank Controller 1
+ */
 class MBC1 : public MemoryBankController {
 
 public:
@@ -15,4 +30,5 @@ public:
     void writeByte(uint16_t address, uint8_t value);
     uint8_t readByte(uint16_t address);
 };
+
 #endif //GBEMU_MBC1_H
