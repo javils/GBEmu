@@ -28,8 +28,9 @@ private:
     Cartridge::CartrigdeType cartrigdeType;
 
     // Setter and Getter IOREGS
-    inline void setIOReg(IOREGS regIO, uint8_t value) { IOPorts[regIO - 0xFF00] = value; }
-    inline uint8_t getIOReg(IOREGS regIO) { return IOPorts[regIO - 0xFF00]; }
+    // Specific special registers here.
+    void setIOReg(IOREGS regIO, uint8_t value);
+    uint8_t getIOReg(IOREGS regIO);
 
     void selectMBC(Cartridge::CartrigdeType cartridgeType);
 public:

@@ -151,7 +151,7 @@ void MemoryDMG::setByte(uint16_t address, uint8_t value) {
                 OAMRam[address - 0xFE00] = value;   // OAM RAM
             } else if (address > 0xFEFF && address < 0xFF4C) {
                 //TODO: Write IO REG. At the moment only modify the value of the IO, but probably we need do more things
-                IOPorts[address - 0xFF00] = value;  // IO REGs
+                setIOReg((IOREGS) address, value);  // IO REGs
             } else if (address > 0xFF7F && address < 0xFFFF) {
                 HRAM[address - 0xFF80] = value;
             } else if (address == 0xFFFF) {
@@ -206,7 +206,7 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
             else if (address < 0xFEA0)
                 return OAMRam[address - 0xFEA0];
             else if (address > 0xFEFF && address < 0xFF4C)
-                return IOPorts[address - 0xFF00];
+                return getIOReg((IOREGS) address);
             else if (address > 0xFF7F && address < 0xFFFF)
                 return HRAM[address - 0xFF80];
             else if (address == 0xFFFF)
@@ -233,4 +233,19 @@ uint16_t MemoryDMG::getWord(uint16_t address) {
     uint8_t h = getByte(++address);
 
     return h << 8 | l;
+}
+
+void MemoryDMG::setIOReg(IOREGS regIO, uint8_t value) {
+    switch(regIO) {
+        default:
+            IOPorts[regIO - 0xFF00] = value;
+            break;
+    }
+}
+
+uint8_t MemoryDMG::getIOReg(IOREGS regIO) {
+    switch (regIO) {
+        default:
+            return IOPorts[regIO - 0xFF00];
+    }
 }
