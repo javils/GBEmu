@@ -72,8 +72,13 @@ public:
         IE =    0xFFFF,         //< Interrupt Enable
     };
 
+    //< Helper methods to get values without rules.
     virtual void setIOReg(IOREGS regIO, uint8_t value) = 0;
     virtual uint8_t getIOReg(IOREGS regIO) = 0;
+
+    //< Get values of the registers with rules. Like must be and GB do it.
+    virtual void writeIOReg(IOREGS regIO, uint8_t value) = 0;
+    virtual uint8_t readIOReg(IOREGS regIO) = 0;
 
 
 };

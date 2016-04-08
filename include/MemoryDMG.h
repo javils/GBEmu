@@ -28,11 +28,11 @@ class MemoryDMG : public BasicMemory {
     Cartridge::CartrigdeType cartrigdeType;
 
     //< IOHandler
-    unique_ptr<IOHandlerDMG> ioHandler;
+    IOHandlerDMG * ioHandler;
 
     void selectMBC(Cartridge::CartrigdeType cartridgeType);
 public:
-    MemoryDMG(Cartridge *cartridge, unique_ptr<IOHandlerDMG> ioHandler);
+    MemoryDMG(Cartridge *cartridge, IOHandlerDMG * ioHandler);
 
     void init(Cartridge::CartrigdeType cartrigdeType);
 

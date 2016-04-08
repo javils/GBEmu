@@ -6,7 +6,7 @@
 #include <IOHandler.h>
 #include "MemoryDMG.h"
 
-MemoryDMG::MemoryDMG(Cartridge *cartridge, unique_ptr<IOHandlerDMG> ioHandler) {
+MemoryDMG::MemoryDMG(Cartridge *cartridge, IOHandlerDMG *ioHandler) {
     ROM = cartridge->getROM();
     setNumRAMBanks(cartridge->getRAMBanks());
     setNumROMBanks(cartridge->getROMBanks());
@@ -119,7 +119,7 @@ void MemoryDMG::setByte(uint16_t address, uint8_t value) {
             } else if (address < 0xFEA0) {
                 OAMRam[address - 0xFE00] = value;   // OAM RAM
             } else if (address > 0xFEFF && address < 0xFF4C) {
-                ioHandler->setIOReg((IOHandler::IOREGS) address, value);  // IO REGs
+                ioHandler->writeIOReg((IOHandler::IOREGS) address, value);  // IO REGs
             } else if (address > 0xFF7F && address < 0xFFFF) {
                 HRAM[address - 0xFF80] = value;
             } else if (address == 0xFFFF) {
@@ -174,7 +174,7 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
             else if (address < 0xFEA0)
                 return OAMRam[address - 0xFEA0];
             else if (address > 0xFEFF && address < 0xFF4C)
-                return ioHandler->getIOReg((IOHandler::IOREGS) address);
+                return ioHandler->readIOReg((IOHandler::IOREGS) address);
             else if (address > 0xFF7F && address < 0xFFFF)
                 return HRAM[address - 0xFF80];
             else if (address == 0xFFFF)

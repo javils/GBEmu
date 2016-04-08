@@ -40,7 +40,7 @@ IOHandlerDMG::IOHandlerDMG() {
     setIOReg(IOHandler::WX, 0x00);
 }
 
-void IOHandlerDMG::setIOReg(IOREGS regIO, uint8_t value) {
+void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
     switch(regIO) {
         case DIV:
             timer->resetDIVCycles();
@@ -61,7 +61,7 @@ void IOHandlerDMG::setIOReg(IOREGS regIO, uint8_t value) {
 
 }
 
-uint8_t IOHandlerDMG::getIOReg(IOREGS regIO) {
+uint8_t IOHandlerDMG::readIOReg(IOREGS regIO) {
 
     switch(regIO) {
         default:

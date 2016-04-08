@@ -6,8 +6,10 @@
 #define GBEMU_TIMER_H
 
 #include "Z80.h"
+#include "IOHandlerDMG.h"
 
 class Z80;
+class IOHandlerDMG;
 class Timer {
 
 public:
@@ -18,9 +20,11 @@ public:
     inline void resetDIVCycles() { divCycles = 0; };
     inline void resetTIMACycles() { TIMACycles = 0; };
     inline void setCPU(Z80 * cpu) { this->cpu = cpu; };
+    inline void setIOHandler(IOHandlerDMG * ioHandler) { this->ioHandler = ioHandler; };
 private:
     void selectFrequency();
 
+    IOHandlerDMG * ioHandler;
     Z80 * cpu;
 
     uint16_t divCycles;

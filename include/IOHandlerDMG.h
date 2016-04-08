@@ -10,7 +10,7 @@
 #include "MemoryDMG.h"
 
 class MemoryDMG;
-
+class Timer;
 /**
  * This class helps to handle all the IO operations. For example if we write in Timer register DIV
  * we have to reset this register.
@@ -18,8 +18,10 @@ class MemoryDMG;
 class IOHandlerDMG : public IOHandler {
 public:
     IOHandlerDMG ();
-    void setIOReg(IOREGS regIO, uint8_t value);
-    uint8_t getIOReg(IOREGS regIO);
+    void setIOReg(IOREGS regIO, uint8_t value) { IOPorts[regIO - 0xFF00] = value; };
+    uint8_t getIOReg(IOREGS regIO) { return IOPorts[regIO - 0xFF00]; };
+    void writeIOReg(IOREGS regIO, uint8_t value);
+    uint8_t readIOReg(IOREGS regIO);
 
     inline void setTimer(Timer * timer) { this->timer = timer; }
 private:
