@@ -12,12 +12,12 @@
 #include "Memory.h"
 #include "MemoryBankController.h"
 #include "Cartridge.h"
+#include "IOHandlerDMG.h"
 
 using namespace std;
+class IOHandlerDMG;
 class MemoryDMG : public BasicMemory {
-private:
     // This memory is special for DMG
-    array<uint8_t, 0x4D> IOPorts;               //< 0xFF00 to 0xFF4B
                                                 //< 0xFF4C to 0xFF7F    NOT USABLE MEM
     array<uint8_t, 0x80> HRAM;                  //< 0xFF80 to 0xFFFE
     uint8_t IERegister;                         //< 0xFFFF  Interrupt Enable Register
@@ -27,14 +27,12 @@ private:
 
     Cartridge::CartrigdeType cartrigdeType;
 
-    // Setter and Getter IOREGS
-    // Specific special registers here.
-    void setIOReg(IOREGS regIO, uint8_t value);
-    uint8_t getIOReg(IOREGS regIO);
+    //< IOHandler
+    unique_ptr<IOHandlerDMG> ioHandler;
 
     void selectMBC(Cartridge::CartrigdeType cartridgeType);
 public:
-    MemoryDMG(vector<uint8_t> ROM, uint8_t numROMBanks, uint8_t numRAMBanks, Cartridge::CartrigdeType cartrigdeType);
+    MemoryDMG(Cartridge *cartridge, unique_ptr<IOHandlerDMG> ioHandler);
 
     void init(Cartridge::CartrigdeType cartrigdeType);
 

@@ -3,13 +3,16 @@
 //
 
 #include <MBCs.h>
+#include <IOHandler.h>
 #include "MemoryDMG.h"
 
-MemoryDMG::MemoryDMG(vector<uint8_t> ROM, uint8_t numROMBanks, uint8_t numRAMBanks, Cartridge::CartrigdeType cartrigdeType){
-    this->ROM = ROM;
-    setNumROMBanks(numROMBanks);
-    setNumRAMBanks(numRAMBanks);
-    this->cartrigdeType = cartrigdeType;
+MemoryDMG::MemoryDMG(Cartridge *cartridge, unique_ptr<IOHandlerDMG> ioHandler) {
+    ROM = cartridge->getROM();
+    setNumRAMBanks(cartridge->getRAMBanks());
+    setNumROMBanks(cartridge->getROMBanks());
+    cartrigdeType = cartridge->getCartridgeType();
+
+    this->ioHandler = move(ioHandler);
 
     init(cartrigdeType);
 }
@@ -41,43 +44,9 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
     //< Init OAM Ram
     generate(OAMRam.begin(), OAMRam.end(), fillRandom());
 
-    //< Init IOPOrts and HRAM
-    IOPorts.fill(0x00);
+    //< Init HRAM
     HRAM.fill(0x00);
 
-    //< Set specific values in IOPorts.
-    setIOReg(TIMA, 0x00);
-    setIOReg(TMA, 0x00);
-    setIOReg(TAC, 0x00);
-
-    setIOReg(NR_10, 0x80);
-    setIOReg(NR_11, 0xBF);
-    setIOReg(NR_12, 0xF3);
-    setIOReg(NR_14, 0xBF);
-    setIOReg(NR_21, 0x3F);
-    setIOReg(NR_22, 0x00);
-    setIOReg(NR_24, 0xBF);
-    setIOReg(NR_30, 0x7F);
-    setIOReg(NR_31, 0xFF);
-    setIOReg(NR_32, 0x9F);
-    setIOReg(NR_33, 0xBF);
-    setIOReg(NR_41, 0xFF);
-    setIOReg(NR_42, 0x00);
-    setIOReg(NR_43, 0x00);
-    setIOReg(NR_44, 0xBF);
-    setIOReg(NR_50, 0x77);
-    setIOReg(NR_51, 0xF3);
-    setIOReg(NR_52, 0xF1);
-
-    setIOReg(LCDC, 0x91);
-    setIOReg(SCY, 0X00);
-    setIOReg(SCX, 0x00);
-    setIOReg(LYC, 0x00);
-    setIOReg(BGP, 0xFC);
-    setIOReg(OBP0, 0xFF);
-    setIOReg(OBP1, 0xFF);
-    setIOReg(WY, 0x00);
-    setIOReg(WX, 0x00);
     IERegister = 0x00;
 
     setSelectedROMBank(0);
@@ -150,8 +119,7 @@ void MemoryDMG::setByte(uint16_t address, uint8_t value) {
             } else if (address < 0xFEA0) {
                 OAMRam[address - 0xFE00] = value;   // OAM RAM
             } else if (address > 0xFEFF && address < 0xFF4C) {
-                //TODO: Write IO REG. At the moment only modify the value of the IO, but probably we need do more things
-                setIOReg((IOREGS) address, value);  // IO REGs
+                ioHandler->setIOReg((IOHandler::IOREGS) address, value);  // IO REGs
             } else if (address > 0xFF7F && address < 0xFFFF) {
                 HRAM[address - 0xFF80] = value;
             } else if (address == 0xFFFF) {
@@ -206,7 +174,7 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
             else if (address < 0xFEA0)
                 return OAMRam[address - 0xFEA0];
             else if (address > 0xFEFF && address < 0xFF4C)
-                return getIOReg((IOREGS) address);
+                return ioHandler->getIOReg((IOHandler::IOREGS) address);
             else if (address > 0xFF7F && address < 0xFFFF)
                 return HRAM[address - 0xFF80];
             else if (address == 0xFFFF)
@@ -233,19 +201,4 @@ uint16_t MemoryDMG::getWord(uint16_t address) {
     uint8_t h = getByte(++address);
 
     return h << 8 | l;
-}
-
-void MemoryDMG::setIOReg(IOREGS regIO, uint8_t value) {
-    switch(regIO) {
-        default:
-            IOPorts[regIO - 0xFF00] = value;
-            break;
-    }
-}
-
-uint8_t MemoryDMG::getIOReg(IOREGS regIO) {
-    switch (regIO) {
-        default:
-            return IOPorts[regIO - 0xFF00];
-    }
 }
