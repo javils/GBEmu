@@ -20,7 +20,10 @@ public:
     IOHandlerDMG ();
     void setIOReg(IOREGS regIO, uint8_t value);
     uint8_t getIOReg(IOREGS regIO);
+
+    inline void setTimer(Timer * timer) { this->timer = timer; }
 private:
     array<uint8_t, 0x4D> IOPorts;               //< 0xFF00 to 0xFF4B
+    Timer * timer;
 };
 #endif //GBEMU_IOHANDLERDMG_H

@@ -42,6 +42,18 @@ IOHandlerDMG::IOHandlerDMG() {
 
 void IOHandlerDMG::setIOReg(IOREGS regIO, uint8_t value) {
     switch(regIO) {
+        case DIV:
+            timer->resetDIVCycles();
+            IOPorts[regIO - 0xFF00] = 0x0;
+            break;
+        case TAC:
+        {
+            //< Reset TIMA if change the frequency in TAC.
+            uint8_t tac = getIOReg(TAC);
+            if ((tac & 0x03) != (value & 0x03))
+                timer->resetTIMACycles();
+            IOPorts[regIO - 0xFF00] = value;
+        }
         default:
             IOPorts[regIO - 0xFF00] = value;
             break;
