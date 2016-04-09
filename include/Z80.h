@@ -50,7 +50,7 @@ private:
     unique_ptr<reg_t> SP;   //< Stack Pointer 16bits
     unique_ptr<reg_t> CP;   //< Counter Program 16bits
 
-    uint16_t cpu_clock_counter; //< Clock counter
+    uint32_t cpu_clock_counter; //< Clock counter
 
     unique_ptr<Bus> bus;  //< Bus for the memory.
 
@@ -179,7 +179,7 @@ public:
     inline uint8_t getL() { return HL->bytes.l; }
 
     inline uint8_t getFlag(FLAGS_T flag) { return (uint8_t) ((getF() & flag) != 0); }
-    inline uint16_t getClockCounter() { return cpu_clock_counter; }
+    inline uint32_t getClockCounter() { return cpu_clock_counter; }
     inline CPUStatus getStatus() { return cpuStatus; }
     inline bool areInterruptsEnabled() { return InterruptMasterEnable; }
 
@@ -206,6 +206,7 @@ public:
     inline void setFlagCond(uint8_t flag, bool cond) { if (cond) setFlag(flag); else resetFlag(flag); }
 
     inline void addClockCounter(uint8_t value) { cpu_clock_counter += value; }
+    inline void setClockCounter(uint8_t value) { cpu_clock_counter = value; }
 
     inline uint16_t incCP() { return ++CP->val; }
 
