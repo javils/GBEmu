@@ -8,9 +8,11 @@
 #include "IOHandler.h"
 #include "Timer.h"
 #include "MemoryDMG.h"
+#include "GPUDMG.h"
 
 class MemoryDMG;
 class Timer;
+class GPUDMG;
 /**
  * This class helps to handle all the IO operations. For example if we write in Timer register DIV
  * we have to reset this register.
@@ -24,8 +26,11 @@ public:
     uint8_t readIOReg(IOREGS regIO);
 
     inline void setTimer(Timer * timer) { this->timer = timer; }
+    inline void setGPU(GPUDMG * gpu) { this->gpuDMG = gpu; }
 private:
     array<uint8_t, 0x4D> IOPorts;               //< 0xFF00 to 0xFF4B
+
     Timer * timer;
+    GPUDMG * gpuDMG;
 };
 #endif //GBEMU_IOHANDLERDMG_H

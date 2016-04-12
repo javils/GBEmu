@@ -41,6 +41,7 @@ IOHandlerDMG::IOHandlerDMG() {
 }
 
 void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
+    printf("\nREG: %04x", regIO);
     switch(regIO) {
         case DIV:
             timer->resetDIVCycles();
@@ -53,6 +54,53 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
             if ((tac & 0x03) != (value & 0x03))
                 timer->resetTIMACycles();
             IOPorts[regIO - 0xFF00] = value;
+            break;
+        }
+        case LCDC:
+        {
+            IOPorts[regIO - 0xFF00] = value;
+
+            //< Enable or disable LCD
+            gpuDMG->enableLCD((value & 0x80) != 0);
+            break;
+        }
+        case STAT:
+        {
+            //< Three lower bits are read only
+            uint8_t stat = (uint8_t) (IOPorts[regIO - 0xFF00] & 0x07);
+            uint8_t interrupt = (uint8_t) (IOPorts[regIO - 0xFF00] & 0x70);
+            interrupt >>= 3;
+            //< & 0x78 because only use the lower 7 bits of the byte.
+            IOPorts[regIO - 0xFF00] = uint8_t((value & 0x78) | stat);
+
+            if (!gpuDMG->isLCDEnable())
+                return;
+
+
+            uint8_t gpuMode = gpuDMG->getGPUMode();
+
+            //< Request interrupt if the flag is enabled and we are in the correct mode.
+            if ((interrupt  & 0x04) && gpuMode == GPU::SCAN_OAM)
+                cpu->requestInterrupt(LCD_STAT_INT);
+            if ((interrupt  & 0x02) && gpuMode == GPU::VBLANK)
+                    cpu->requestInterrupt(LCD_STAT_INT);
+            if ((interrupt  & 0x01) && gpuMode == GPU::HBLANK)
+                    cpu->requestInterrupt(LCD_STAT_INT);
+
+            break;
+        }
+        case LY:
+        {
+            //< Only read, write here reset the counter.
+            IOPorts[regIO - 0xFF00] = 0x0;
+            break;
+        }
+        case LYC:
+        {
+            IOPorts[regIO - 0xFF00] = value;
+
+            if (gpuDMG->isLCDEnable())
+                gpuDMG->checkLYWithLYC();
         }
         default:
             IOPorts[regIO - 0xFF00] = value;

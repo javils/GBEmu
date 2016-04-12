@@ -9,7 +9,8 @@ set(SRC_SOURCE_FILES CPU/Z80.cpp
         Memory/Cartridge.cpp
         Memory/MBC/MBC1.cpp
         Memory/IOHandlerDMG.cpp
-        Timer/Timer.cpp)
+        Timer/Timer.cpp
+        Video/GPUDMG.cpp)
 
 # Build library using header and source files.
 add_library(GBEmu SHARED ${SRC_SOURCE_FILES} ${GLOBAL_INC_FILES})

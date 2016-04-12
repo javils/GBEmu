@@ -6,6 +6,8 @@
 #define GBEMU_IOHANDLER_H
 
 #include <stdint.h>
+#include "Z80.h"
+
 class IOHandler {
 public:
     /**
@@ -79,6 +81,11 @@ public:
     //< Get values of the registers with rules. Like must be and GB do it.
     virtual void writeIOReg(IOREGS regIO, uint8_t value) = 0;
     virtual uint8_t readIOReg(IOREGS regIO) = 0;
+
+    inline void setCPU(Z80 * cpu) { this->cpu = cpu; }
+    inline Z80* getCPU() { return cpu; }
+protected:
+    Z80 * cpu;
 
 
 };
