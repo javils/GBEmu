@@ -9,7 +9,7 @@
 #include "IOHandlerDMG.h"
 
 class Z80;
-class IOHandlerDMG;
+class IOHandler;
 class Timer {
 
 public:
@@ -20,11 +20,11 @@ public:
     inline void resetDIVCycles() { divCycles = 0; };
     inline void resetTIMACycles() { TIMACycles = 0; };
     inline void setCPU(Z80 * cpu) { this->cpu = cpu; };
-    inline void setIOHandler(IOHandlerDMG * ioHandler) { this->ioHandler = ioHandler; };
+    inline void setIOHandler(IOHandler * ioHandler) { this->ioHandler = ioHandler; };
 private:
     void selectFrequency();
 
-    IOHandlerDMG * ioHandler;
+    IOHandler * ioHandler;
     Z80 * cpu;
 
     uint16_t divCycles;
