@@ -46,8 +46,10 @@ void Z80::step(){
     }
 
     // If this condition is true imply that EI and the next instruction was executed
-    if (isEIafter && EIExecuted)
+    if (isEIafter && EIExecuted) {
+        EIExecuted = false;
         InterruptMasterEnable = true;
+    }
 }
 
 Interrupts Z80::pendingInterruption() {
