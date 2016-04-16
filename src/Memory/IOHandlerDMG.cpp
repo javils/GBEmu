@@ -41,7 +41,6 @@ IOHandlerDMG::IOHandlerDMG() {
 }
 
 void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
-    printf("\nREG: %04x", regIO);
     switch(regIO) {
         case DIV:
             timer->resetDIVCycles();

@@ -1,0 +1,48 @@
+//
+// Created by Javier Luque Sanabria on 14/4/16.
+//
+
+#ifndef GBEMU_LCD_H
+#define GBEMU_LCD_H
+
+#include <array>
+#include <vector>
+
+class LCDColor {
+private:
+    uint8_t r, g, b, a;
+public:
+    LCDColor () { r = 0xFF; g = 0x00; b = 0x00; a = 0xFF; }
+    inline void setColor(uint8_t r, uint8_t g, uint8_t b) { setR(r); setG(g); setB(b); }
+    inline void setR(uint8_t r) { this->r = r; }
+    inline void setG(uint8_t g) { this->g = g; }
+    inline void setB(uint8_t b) { this->b = b; }
+
+    inline uint8_t getR() { return r; }
+    inline uint8_t getG() { return g; }
+    inline uint8_t getB() { return b; }
+    inline uint32_t getColor() { return (uint32_t) ((r << 24) | (g << 16) | (b << 8) | a); }
+};
+
+using namespace std;
+
+class LCD {
+public:
+
+    LCD() {
+        for(int i = 0; i < SCREEN_HEIGHT; i++)
+            for (int j = 0; j < SCREEN_WIDTH; j++)
+                screenBuffer[i][j] = LCDColor();
+    }
+
+    static const uint8_t SCREEN_WIDTH = 160;
+    static const uint8_t SCREEN_HEIGHT = 144;
+    static const uint8_t SCREEN_HEIGHT_VBLANK = 153;
+
+    inline void setPixelColor(uint8_t x, uint8_t y, LCDColor color) { screenBuffer[y] [x] = color; }
+    inline array<array<LCDColor, SCREEN_WIDTH>, SCREEN_HEIGHT> getScreenBuffer() { return screenBuffer; };
+private:
+    array<array<LCDColor, SCREEN_WIDTH>, SCREEN_HEIGHT> screenBuffer;
+    //LCDColor screenBuffer[SCREEN_HEIGHT] [SCREEN_WIDTH];
+};
+#endif //GBEMU_LCD_H

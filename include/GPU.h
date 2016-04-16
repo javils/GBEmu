@@ -7,6 +7,7 @@
 
 #include "IOHandler.h"
 #include "Z80.h"
+#include "LCD.h"
 
 class GPU {
 public:
@@ -48,12 +49,14 @@ public:
         ioHandler->setIOReg(IOHandler::STAT, stat);
     }
 
+    inline LCD * getLCD() { return lcd; }
 protected:
     IOHandler * ioHandler;
 
     uint8_t lyCounter;
     uint16_t gpuClock;
     GPUModes gpuMode;
+    LCD *lcd;
 
     bool lcdEnable;
 
