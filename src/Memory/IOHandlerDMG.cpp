@@ -5,6 +5,8 @@
 
 IOHandlerDMG::IOHandlerDMG() {
 
+    IOPorts.fill(0x0);
+
     //< Set specific values in IOPorts.
     setIOReg(IOHandler::TIMA, 0x00);
     setIOReg(IOHandler::TMA, 0x00);
@@ -100,6 +102,16 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
 
             if (gpuDMG->isLCDEnable())
                 gpuDMG->checkLYWithLYC();
+            break;
+        }
+        case DMA:
+        {
+            uint16_t address = value << 8 ; // source address is data * 100
+            for (uint16_t i = 0 ; i < 0xA0; i++)
+            {
+                cpu->writeByteMem((uint16_t) (0xFE00 + i), cpu->readByteMem(address + i)) ;
+            }
+            break;
         }
         default:
             IOPorts[regIO - 0xFF00] = value;

@@ -19,13 +19,11 @@ public:
     void update(uint16_t clock);
     inline void resetDIVCycles() { divCycles = 0; };
     inline void resetTIMACycles() { TIMACycles = 0; };
-    inline void setCPU(Z80 * cpu) { this->cpu = cpu; };
     inline void setIOHandler(IOHandler * ioHandler) { this->ioHandler = ioHandler; };
 private:
     void selectFrequency();
 
     IOHandler * ioHandler;
-    Z80 * cpu;
 
     uint16_t divCycles;
     uint8_t TIMACycles;

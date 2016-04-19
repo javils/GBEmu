@@ -124,7 +124,7 @@ bool Cartridge::CartridgeHeader::fillData() {
 
     copy_n(getBytes(0x0100, 0x0103).begin(), 0x04, initPoint.begin());
     copy_n(getBytes(0x0104, 0x0133).begin(), 0x30, nintendoLogo.begin());
-    copy_n(getBytes(0x0134, 0x0142).begin(), 0x14, title.begin());
+    copy_n(getBytes(0x0134, 0x0142).begin(), 0xF, title.begin());
     gbmode = getByte(0x0143);
     copy_n(getBytes(0x0144, 0x0145).begin(), 0x02, newLicenseCode.begin());
     sgbmode = getByte(0x0146);

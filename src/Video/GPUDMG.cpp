@@ -14,6 +14,10 @@ void GPUDMG::update(uint8_t cycles) {
         stat &= 0xFC;
         stat |= gpuMode;
         ioHandler->setIOReg(IOHandler::STAT, stat);
+
+        if (IsSetBit(stat, 5))
+            ioHandler->getCPU()->requestInterrupt(LCD_STAT_INT);
+
         //< If we have the LCD disabled, not update ly counter with clocks
         return;
     }
@@ -21,7 +25,6 @@ void GPUDMG::update(uint8_t cycles) {
     //< Update GPU clock.
     gpuClock += cycles;
 
-    //TODO: Probably when change the lower values from stat, need check the interrupt flag and request the interrupt.
     switch(gpuMode) {
         case HBLANK: {
             if (gpuClock >= 204) {
@@ -37,11 +40,20 @@ void GPUDMG::update(uint8_t cycles) {
                     gpuMode = VBLANK;
                     stat &= 0xFC;
                     stat |= gpuMode;
+
+                    if (IsSetBit(stat, 4))
+                        ioHandler->getCPU()->requestInterrupt(LCD_STAT_INT);
+
                     //< Now we are in VBLANK, request the correspond interrupt.
                     ioHandler->getCPU()->requestInterrupt(VBLANK_INT);
                 }
                 else {
                     gpuMode = SCAN_OAM;
+                    stat &= 0xFC;
+                    stat |= gpuMode;
+
+                    if (IsSetBit(stat, 5))
+                        ioHandler->getCPU()->requestInterrupt(LCD_STAT_INT);
                 }
 
                 //< Update the stat register
@@ -57,12 +69,19 @@ void GPUDMG::update(uint8_t cycles) {
                 ioHandler->setIOReg(IOHandler::LY, lyCounter);
                 checkLYWithLYC();
 
+                uint8_t stat = ioHandler->getIOReg(IOHandler::STAT);
+
                 if (lyCounter > 153)
                 {
                     //< Restart the process
                     gpuClock = 0;
                     lyCounter = 0;
                     gpuMode = SCAN_OAM;
+                    stat &= 0xFC;
+                    stat |= gpuMode;
+
+                    if (IsSetBit(stat, 5))
+                        ioHandler->getCPU()->requestInterrupt(LCD_STAT_INT);
                 }
             }
             break;
@@ -86,6 +105,10 @@ void GPUDMG::update(uint8_t cycles) {
                 stat &= 0xFC;
                 stat |= gpuMode;
                 ioHandler->setIOReg(IOHandler::STAT, stat);
+
+                if (IsSetBit(stat, 3))
+                    ioHandler->getCPU()->requestInterrupt(LCD_STAT_INT);
+
                 renderScanLine();
             }
             break;
@@ -116,8 +139,9 @@ void GPUDMG::renderScanLine() {
         uint8_t bitColour;
         uint8_t colorNum;
 
-        for (uint8_t x = 0; x < LCD::SCREEN_WIDTH; x++)
+        for (uint8_t xx = 0; xx < LCD::SCREEN_WIDTH; xx++)
         {
+            uint8_t x = xx + scx;
             //< Get the tile ID that correspond to the actual x, y position.
             yAdjusted = ((y >> 3) << 6);
             xAdjusted = (x >> 3);
@@ -127,10 +151,6 @@ void GPUDMG::renderScanLine() {
             //< If data is picked in 0x8800, the tile id is -127 to 127, in other case 0 to 255
             if (bgTileDataBase == 0x8000) {
                 bgTileDataFinalAddr = bgTileDataBase + (tileId << 4);
-            }
-            else {
-                //< Signed tileId
-                bgTileDataFinalAddr = (uint16_t) (bgTileDataBase + (((int8_t)(tileId) + 128) << 4));
             }
 
             //< Need Sum the line of the tile and multiply by 2 because a tile use 2 bytes.
@@ -147,24 +167,24 @@ void GPUDMG::renderScanLine() {
 
             COLORS color = getColor(colorNum);
 
-            LCDColor lcdColor;
+            LCDColor *lcdColor = new LCDColor();
 
             switch (color) {
                 case WHITE:
-                    lcdColor.setColor(0xFF, 0xFF, 0xFF);
+                    lcdColor->setColor(0xFF, 0xFF, 0xFF);
                     break;
                 case LIGHT_GREY:
-                    lcdColor.setColor(0xCC, 0xCC, 0xCC);
+                    lcdColor->setColor(0xCC, 0xCC, 0xCC);
                     break;
                 case DARK_GREY:
-                    lcdColor.setColor(0x77, 0x77, 0x77);
+                    lcdColor->setColor(0x77, 0x77, 0x77);
                     break;
                 default:
-                    lcdColor.setColor(0x00, 0x00, 0x00);
+                    lcdColor->setColor(0x00, 0x00, 0x00);
                     break;
             }
 
-            lcd->setPixelColor(lyCounter, x, lcdColor);
+            lcd->setPixelColor(x, lyCounter, lcdColor);
         }
     }
 }

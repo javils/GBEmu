@@ -32,7 +32,7 @@ void Timer::update(uint16_t clock) {
             //< If tima Overflow, TIMA = TMA and request interrupt.
             if (TIMA == 0xFF) {
                 ioHandler->setIOReg(IOHandler::TIMA, ioHandler->getIOReg(IOHandler::TMA));
-                cpu->requestInterrupt(TIMER_INT);
+                ioHandler->getCPU()->requestInterrupt(TIMER_INT);
             }
             else
                 ioHandler->setIOReg(IOHandler::TIMA, ++TIMA);

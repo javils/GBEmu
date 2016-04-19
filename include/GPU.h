@@ -11,7 +11,12 @@
 
 class GPU {
 public:
-
+    GPU() {
+        gpuMode = SCAN_OAM;
+        gpuClock = 0;
+        lyCounter = 0;
+        lcdEnable = true;
+    }
     /*
      * All the possible states of the gpu.
      */

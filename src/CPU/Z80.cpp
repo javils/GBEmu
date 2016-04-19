@@ -76,7 +76,7 @@ void Z80::executeInterrupt(Interrupts interrupt) {
     if (InterruptMasterEnable) {
         //< Interrupt Flag
         uint8_t if_reg = readByteMem(0xFF0F);
-        writeByteMem(0xFF0F, if_reg & interrupt);   //< Reset the interrupt that will be executed.
+        writeByteMem(0xFF0F, if_reg & ~interrupt);   //< Reset the interrupt that will be executed.
 
         //< If there are interrupt, set IME to false and push CP into stack.
         if (interrupt != NONE_INT) {
