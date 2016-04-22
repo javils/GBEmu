@@ -81,9 +81,9 @@ void Z80::executeInterrupt(Interrupts interrupt) {
         //< If there are interrupt, set IME to false and push CP into stack.
         if (interrupt != NONE_INT) {
             InterruptMasterEnable = false;
+            (*refSP())--;
+            (*refSP())--;
             writeWordMem(getSP(), getCP());
-            (*refSP())--;
-            (*refSP())--;
         }
 
         //< Change the CP to the interrupt.
