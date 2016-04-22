@@ -8,6 +8,7 @@ IOHandlerDMG::IOHandlerDMG() {
     IOPorts.fill(0x0);
 
     //< Set specific values in IOPorts.
+    setIOReg(IOHandler::P1, 0xCF);
     setIOReg(IOHandler::TIMA, 0x00);
     setIOReg(IOHandler::TMA, 0x00);
     setIOReg(IOHandler::TAC, 0x00);
@@ -44,6 +45,8 @@ IOHandlerDMG::IOHandlerDMG() {
 
 void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
     switch(regIO) {
+        case P1:
+            input->Write(value);
         case DIV:
             timer->resetDIVCycles();
             IOPorts[regIO - 0xFF00] = 0x0;
@@ -59,10 +62,20 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
         }
         case LCDC:
         {
-            IOPorts[regIO - 0xFF00] = value;
-
-            //< Enable or disable LCD
-            gpuDMG->enableLCD((value & 0x80) != 0);
+            // LCDC
+            uint8_t new_lcdc = value;
+            IOPorts[regIO - 0xFF00] = new_lcdc;
+            if (IsSetBit(new_lcdc, 7)) {
+                gpuDMG->enableLCD(true);
+                gpuDMG->renderScanLine();
+            }
+            else {
+                setIOReg(LY, 0x0);
+                uint8_t stat = getIOReg(STAT);
+                stat &= 0x7C;
+                setIOReg(STAT, stat);
+                gpuDMG->DisableLCD();
+            }
             break;
         }
         case STAT:
@@ -123,6 +136,10 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
 uint8_t IOHandlerDMG::readIOReg(IOREGS regIO) {
 
     switch(regIO) {
+        case P1:
+        {
+            return input->Read();
+        }
         default:
             return IOPorts[regIO - 0xFF00];
     }
