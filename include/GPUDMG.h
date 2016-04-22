@@ -12,6 +12,7 @@ class GPUDMG : public GPU {
 public:
     GPUDMG () {
         lcd = new LCD();
+        lyCounter = 0;
     }
 
     enum COLORS {
@@ -21,8 +22,11 @@ public:
         BLACK
     };
     void update(uint8_t cycles);
-private:
+
+    void DisableLCD();
     void renderScanLine();
+
+private:
     COLORS getColor(uint8_t colorNum);
 };
 #endif //GBEMU_GPUDMG_H

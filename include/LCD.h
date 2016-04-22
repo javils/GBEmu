@@ -17,6 +17,8 @@ public:
     inline void setG(uint8_t g) { this->g = g; }
     inline void setB(uint8_t b) { this->b = b; }
 
+    inline void setA(uint8_t a) { this->a = a; }
+
     inline uint8_t getR() { return r; }
     inline uint8_t getG() { return g; }
     inline uint8_t getB() { return b; }
@@ -30,7 +32,7 @@ public:
     LCD() {
         for (int y = 0; y < SCREEN_HEIGHT; y++)
             for(int x = 0; x < SCREEN_WIDTH; x++)
-                screenBuffer[y][x] = new LCDColor();
+                screenBuffer[y][x] = 0;
 
     }
 
@@ -38,12 +40,12 @@ public:
     static const uint8_t SCREEN_HEIGHT = 144;
     static const uint8_t SCREEN_HEIGHT_VBLANK = 153;
 
-    inline void setPixelColor(uint8_t x, uint8_t y, LCDColor* color) { screenBuffer[y][x] = color; }
-    inline array<array<LCDColor*, SCREEN_WIDTH>, SCREEN_HEIGHT> getScreenBuffer() { return screenBuffer; };
+    inline void setPixelColor(uint8_t x, uint8_t y, uint8_t color) { screenBuffer[y][x] = color; }
+
+    inline array<array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT> getScreenBuffer() { return screenBuffer; };
 private:
-    array<array<LCDColor*, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screenBuffer;
-    //LCDColor screenBuffer[SCREEN_HEIGHT] [SCREEN_WIDTH];
+    array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screenBuffer;
 };
 
-typedef array<array<LCDColor*, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screen_t;
+typedef array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screen_t;
 #endif //GBEMU_LCD_H

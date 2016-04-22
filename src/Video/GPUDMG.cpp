@@ -8,6 +8,7 @@ void GPUDMG::update(uint8_t cycles) {
 
     if (!isLCDEnable()) {
         lyCounter = 0;
+        gpuClock = 0;
         ioHandler->setIOReg(IOHandler::LY, 0x0);
         gpuMode = GPUModes::SCAN_OAM;
         uint8_t stat = ioHandler->getIOReg(IOHandler::STAT);
@@ -35,7 +36,7 @@ void GPUDMG::update(uint8_t cycles) {
 
                 uint8_t stat = ioHandler->getIOReg(IOHandler::STAT);
 
-                if (lyCounter == 144)   //< End of the visible screen
+                if (lyCounter == 143)   //< End of the visible screen
                 {
                     gpuMode = VBLANK;
                     stat &= 0xFC;
@@ -125,72 +126,50 @@ void GPUDMG::renderScanLine() {
     uint8_t scx = ioHandler->getIOReg(IOHandler::SCX);
     uint8_t scy = ioHandler->getIOReg(IOHandler::SCY);
 
-    if (IsSetBit(lcdc, 0)) {
-        uint16_t bgTileMapBase = (uint16_t) (IsSetBit(lcdc, 3) ? 0x9800 : 0x9C00);  //< Each byte is a tile id.
-        uint16_t bgTileDataBase = (uint16_t) (IsSetBit(lcdc, 4) ? 0x8000 : 0x8800); //< Each tile here is 16 bits.
+    uint16_t tilesMap = (uint16_t) (IsSetBit(lcdc, 3) ? 0x9C00 : 0x9800);
+    uint16_t tilesData = (uint16_t) (IsSetBit(lcdc, 4) ? 0x8000 : 0x8800);
 
-        uint8_t y = lyCounter + scy;
-        uint8_t tileId;
+    uint16_t tilesMapAddres;
+    uint16_t tilesDataAddres;
 
-        uint8_t yAdjusted, xAdjusted;
-        uint16_t bgTileMapFinalAddr;
-        uint16_t bgTileDataFinalAddr;
-        uint8_t byte1, byte2;
-        uint8_t bitColour;
-        uint8_t colorNum;
+    for (uint8_t x = 0; x < LCD::SCREEN_WIDTH; x++) {
+        tilesDataAddres = tilesData;
+        tilesMapAddres = tilesMap;
+        uint8_t realX = scx + x;
+        uint8_t realY = scy + lyCounter;
+        uint8_t tileX = realX >> 3; //< x/8
+        uint16_t tileY = (realY >> 3) << 5;
+        tilesMapAddres += tileX + tileY;
 
-        for (uint8_t xx = 0; xx < LCD::SCREEN_WIDTH; xx++)
-        {
-            uint8_t x = xx + scx;
-            //< Get the tile ID that correspond to the actual x, y position.
-            yAdjusted = ((y >> 3) << 6);
-            xAdjusted = (x >> 3);
-            bgTileMapFinalAddr = (bgTileMapBase + yAdjusted + xAdjusted);
-            tileId = ioHandler->getCPU()->readByteMem(bgTileMapFinalAddr);
+        uint8_t tileId = ioHandler->getCPU()->readByteMem(tilesMapAddres);
 
-            //< If data is picked in 0x8800, the tile id is -127 to 127, in other case 0 to 255
-            if (bgTileDataBase == 0x8000) {
-                bgTileDataFinalAddr = bgTileDataBase + (tileId << 4);
-            }
-
-            //< Need Sum the line of the tile and multiply by 2 because a tile use 2 bytes.
-            bgTileDataFinalAddr += (y % 8) << 1;
-
-            //< Get first the most significant bit, that is pixel0.
-            bitColour = (uint8_t) (0x80 >> (x % 8));
-            byte1 = ioHandler->getCPU()->readByteMem(bgTileDataFinalAddr);
-            byte2 = ioHandler->getCPU()->readByteMem((uint16_t) (bgTileDataFinalAddr + 1));
-
-            colorNum = getBitVal(byte1, bitColour);
-            colorNum <<= 1;    //< Shift one to left to concatenate the other bit.
-            colorNum |= getBitVal(byte2, bitColour);
-
-            COLORS color = getColor(colorNum);
-
-            LCDColor *lcdColor = new LCDColor();
-
-            switch (color) {
-                case WHITE:
-                    lcdColor->setColor(0xFF, 0xFF, 0xFF);
-                    break;
-                case LIGHT_GREY:
-                    lcdColor->setColor(0xCC, 0xCC, 0xCC);
-                    break;
-                case DARK_GREY:
-                    lcdColor->setColor(0x77, 0x77, 0x77);
-                    break;
-                default:
-                    lcdColor->setColor(0x00, 0x00, 0x00);
-                    break;
-            }
-
-            lcd->setPixelColor(x, lyCounter, lcdColor);
+        if (tilesData == 0x8800) {
+            if (IsSetBit(tileId, 7))
+                tileId &= 0x7F;
+            else
+                tileId += 128;
         }
+
+        //printf("\n%04x: %02x (%x)",tilesMapAddres, tileId, lyCounter);
+        tilesDataAddres += (tileId << 4) + ((realY % 8) << 1);
+
+        uint8_t byte1 = ioHandler->getCPU()->readByteMem(tilesDataAddres);
+        tilesDataAddres++;
+        uint8_t byte2 = ioHandler->getCPU()->readByteMem(tilesDataAddres);
+
+        uint8_t colorBit = (uint8_t) (0x1 << (7 - (realX % 8)));
+
+        uint8_t color = (uint8_t) ((byte1 & colorBit) ? 1 : 0);
+        color <<= 1;
+        color |= (uint8_t) ((byte2 & colorBit) ? 1 : 0);
+
+        lcd->setPixelColor(x, lyCounter, color);
+
     }
+
 }
 
 GPUDMG::COLORS GPUDMG::getColor(uint8_t colorNum) {
-    COLORS result = WHITE;
     uint8_t palette = ioHandler->getIOReg(IOHandler::BGP);
     uint8_t significantBits = 0;
 
@@ -215,4 +194,11 @@ GPUDMG::COLORS GPUDMG::getColor(uint8_t colorNum) {
     uint8_t color = (palette & significantBits) >> (colorNum << 1);
 
     return (COLORS) color;
+}
+
+void GPUDMG::DisableLCD() {
+    enableLCD(false);
+    setGPUMode(GPUDMG::GPUModes::SCAN_OAM);
+    setGPUClock(0);
+    lyCounter = 0;
 }

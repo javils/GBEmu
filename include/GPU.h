@@ -30,6 +30,10 @@ public:
     inline void setIOHandler(IOHandler * ioHandler) { this->ioHandler = ioHandler; };
     inline GPUModes getGPUMode() { return gpuMode; }
 
+    inline void setGPUMode(GPUModes mode) { gpuMode = mode; }
+
+    inline void setGPUClock(uint16_t clock) { gpuClock = clock; }
+
     inline bool isLCDEnable() { return lcdEnable; };
     inline void enableLCD(bool enable) { lcdEnable = enable; };
 
