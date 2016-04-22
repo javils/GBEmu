@@ -9,7 +9,8 @@ public:
     inline void setIOHandler(IOHandler * ioHandler) { this->ioHandler = ioHandler; }
     void Init();
     void Reset();
-    void update(unsigned int clockCycles);
+
+    void update(uint16_t clockCycles);
     void Write(uint8_t value);
     uint8_t Read();
 private:
@@ -18,10 +19,10 @@ private:
     IOHandler * ioHandler;
     uint8_t joypadState;
     uint8_t p1;
-    uint8_t inputCycles;
+    uint32_t inputCycles;
 };
 
-inline void Input::update(unsigned int clockCycles)
+inline void Input::update(uint16_t clockCycles)
 {
     inputCycles += clockCycles;
 
