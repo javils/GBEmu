@@ -71,7 +71,7 @@ private:
     void op_ld_r16_d16(uint16_t *reg);
     void op_ld_ptr_r16_r8(uint16_t reg16, uint8_t reg8);
 
-    void calc_flags(uint8_t a, uint8_t b, bool sub);
+    void calc_flags(uint8_t a, uint8_t b, uint8_t carry, bool sub);
     void op_add_hl_r16(uint16_t reg16);
     void op_add_a_r8(uint8_t reg);
     void op_adc_a_r8(uint8_t reg);

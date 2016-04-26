@@ -12,6 +12,14 @@ inline bool IsSetBit(const uint8_t value, const uint8_t bit)
     return (value & (0x01 << bit)) != 0;
 }
 
+inline uint8_t UnsetBit(const uint8_t value, const uint8_t bit) {
+    return (uint8_t) (value & (~(0x01 << bit)));
+}
+
+inline uint8_t SetBit(const uint8_t value, const uint8_t bit) {
+    return (uint8_t) (value | (0x01 << bit));
+}
+
 inline uint8_t getBitVal(uint8_t value, uint8_t bit)
 {
     return (uint8_t) ((value & bit) ? 1 : 0);

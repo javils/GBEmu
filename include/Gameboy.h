@@ -17,6 +17,10 @@ public:
 
     screen_t step();
 
+    void KeyPressed(Input::Gameboy_Keys key);
+
+    void KeyReleased(Input::Gameboy_Keys key);
+
     inline Z80 *getCPU() { return cpu.get(); }
 
 private:

@@ -47,6 +47,7 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
     switch(regIO) {
         case P1:
             input->Write(value);
+            break;
         case DIV:
             timer->resetDIVCycles();
             IOPorts[regIO - 0xFF00] = 0x0;
@@ -120,9 +121,12 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
         case DMA:
         {
             uint16_t address = value << 8 ; // source address is data * 100
-            for (uint16_t i = 0 ; i < 0xA0; i++)
-            {
-                cpu->writeByteMem((uint16_t) (0xFE00 + i), cpu->readByteMem(address + i)) ;
+            IOPorts[regIO] = value;
+            if (address >= 0x8000 && address < 0xE000) {
+                for (uint16_t i = 0; i < 0xA0; i++) {
+                    uint8_t mem = cpu->readByteMem(address + i);
+                    cpu->writeByteMem((uint16_t) (0xFE00 + i), mem);
+                }
             }
             break;
         }

@@ -50,3 +50,11 @@ screen_t GameBoy::step() {
 
     return gpuDMG->getLCD()->getScreenBuffer();
 }
+
+void GameBoy::KeyPressed(Input::Gameboy_Keys key) {
+    input->KeyPressed(key);
+}
+
+void GameBoy::KeyReleased(Input::Gameboy_Keys key) {
+    input->KeyReleased(key);
+}

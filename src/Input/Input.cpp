@@ -2,6 +2,7 @@
 // Created by Javier Luque Sanabria on 22/4/16.
 //
 
+#include <Utils.h>
 #include "Input.h"
 
 void Input::Init()
@@ -43,4 +44,12 @@ void Input::step()
         ioHandler->getCPU()->requestInterrupt(JOYPAD_INT);
 
     p1 = current;
+}
+
+void Input::KeyPressed(Gameboy_Keys key) {
+    joypadState = UnsetBit(joypadState, key);
+}
+
+void Input::KeyReleased(Gameboy_Keys key) {
+    joypadState = SetBit(joypadState, key);
 }

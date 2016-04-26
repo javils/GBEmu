@@ -172,7 +172,7 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
             if (address < 0xFE00)
                 return WorkRAM[address - 0xE000];
             else if (address < 0xFEA0)
-                return OAMRam[address - 0xFEA0];
+                return OAMRam[address - 0xFE00];
             else if (address > 0xFEFF && address < 0xFF4C)
                 return ioHandler->readIOReg((IOHandler::IOREGS) address);
             else if (address > 0xFF7F && address < 0xFFFF)

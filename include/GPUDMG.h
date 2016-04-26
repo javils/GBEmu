@@ -26,7 +26,10 @@ public:
     void DisableLCD();
     void renderScanLine();
 
+    void renderBGAndWindow();
+
+    void renderSprites();
 private:
-    COLORS getColor(uint8_t colorNum);
+    COLORS getColor(uint8_t colorNum, IOHandler::IOREGS paletteReg);
 };
 #endif //GBEMU_GPUDMG_H

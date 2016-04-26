@@ -6,10 +6,25 @@
 
 class Input {
 public:
+    enum Gameboy_Keys {
+        A_KEY = 4,
+        B_KEY = 5,
+        START_KEY = 7,
+        SELECT_KEY = 6,
+        RIGHT_KEY = 0,
+        LEFT_KEY = 1,
+        UP_KEY = 2,
+        DOWN_KEY = 3,
+        NONE_KEY = -1
+    };
+
     inline void setIOHandler(IOHandler * ioHandler) { this->ioHandler = ioHandler; }
     void Init();
     void Reset();
 
+    void KeyPressed(Gameboy_Keys key);
+
+    void KeyReleased(Gameboy_Keys key);
     void update(uint16_t clockCycles);
     void Write(uint8_t value);
     uint8_t Read();

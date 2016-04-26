@@ -121,6 +121,13 @@ void GPUDMG::update(uint8_t cycles) {
 }
 
 void GPUDMG::renderScanLine() {
+    if (isLCDEnable()) {
+        renderBGAndWindow();
+        renderSprites();
+    }
+}
+
+void GPUDMG::renderBGAndWindow() {
     uint8_t lcdc = ioHandler->getIOReg(IOHandler::LCDC);
 
     uint8_t scx = ioHandler->getIOReg(IOHandler::SCX);
@@ -166,11 +173,71 @@ void GPUDMG::renderScanLine() {
         lcd->setPixelColor(x, lyCounter, color);
 
     }
-
 }
 
-GPUDMG::COLORS GPUDMG::getColor(uint8_t colorNum) {
-    uint8_t palette = ioHandler->getIOReg(IOHandler::BGP);
+void GPUDMG::renderSprites() {
+    uint8_t lcdc = ioHandler->getIOReg(IOHandler::LCDC);
+
+    if (IsSetBit(lcdc, 1)) {
+
+        uint8_t height = (uint8_t) (IsSetBit(lcdc, 2) ? 16 : 8);
+
+        for (uint8_t sprite = 0; sprite < 40; sprite++) {
+            uint16_t spriteDataAddr = (uint16_t) (0xFE00 + (sprite << 2));
+            uint8_t spriteY = (uint8_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) - 16);
+
+            if (spriteY > lyCounter || (spriteY + height) < lyCounter)
+                continue;
+
+            spriteDataAddr++;
+            uint8_t spriteX = (uint8_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) - 8);
+            spriteDataAddr++;
+            uint8_t tileLocation = ioHandler->getCPU()->readByteMem(spriteDataAddr);
+            spriteDataAddr++;
+            uint8_t attributes = ioHandler->getCPU()->readByteMem(spriteDataAddr);
+            bool aboveBG = IsSetBit(attributes, 7);
+            bool yFlip = IsSetBit(attributes, 6);
+            bool xFlip = IsSetBit(attributes, 5);
+            IOHandler::IOREGS palette = IsSetBit(attributes, 4) ? IOHandler::OBP1 : IOHandler::OBP0;
+
+            int8_t lineSprite = lyCounter - (int8_t) spriteY;
+            if (yFlip) {
+                lineSprite -= height;
+                lineSprite *= -1;
+            }
+
+            uint16_t tileDataAddress = (uint16_t) (0x8000 + (tileLocation << 4) + (lineSprite << 1));
+            uint8_t byte1 = ioHandler->getCPU()->readByteMem(tileDataAddress);
+            tileDataAddress++;
+            uint8_t byte2 = ioHandler->getCPU()->readByteMem(tileDataAddress);
+
+            for (int8_t tileX = 7; tileX >= 0; tileX--) {
+                int8_t colorBit = tileX;
+
+                if (xFlip) {
+                    colorBit -= height;
+                    colorBit *= -1;
+                }
+
+                colorBit = (uint8_t) (0x1 << colorBit);
+
+                uint8_t color = (uint8_t) ((byte1 & colorBit) ? 1 : 0);
+                color <<= 1;
+                color |= (uint8_t) ((byte2 & colorBit) ? 1 : 0);
+
+                COLORS col = getColor(color, palette);
+
+                if (col == WHITE)
+                    continue;
+
+                lcd->setPixelColor(spriteX - tileX + height, lyCounter, col);
+            }
+        }
+    }
+}
+
+GPUDMG::COLORS GPUDMG::getColor(uint8_t colorNum, IOHandler::IOREGS paletteReg) {
+    uint8_t palette = ioHandler->getIOReg(paletteReg);
     uint8_t significantBits = 0;
 
     //< 0 => 0, 1 bits, 1 => 2, 3 bits, 2 => 4, 5 bits, 3 => 6, 7 bits.

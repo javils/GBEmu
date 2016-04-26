@@ -503,7 +503,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         case 0x86://ADD A,(HL)   8 cycles   Z 0 H C
         {
             uint8_t mem = readByteMem(getHL());
-            calc_flags(getA(), mem, false);
+            calc_flags(getA(), mem, 0, false);
             setA(getA() + mem);
             addClockCounter(8);
             break;
@@ -533,7 +533,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         {
             uint8_t mem = readByteMem(getHL());
             uint8_t carry = getFlag(FLAG_C);
-            calc_flags(getA(), mem + carry, false);
+            calc_flags(getA(), mem, carry, false);
             setA(getA() + mem + carry);
             addClockCounter(8);
             break;
@@ -562,7 +562,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         case 0x96://SUB (HL)   8 cycles   Z 1 H C
         {
             uint8_t mem = readByteMem(getHL());
-            calc_flags(getA(), mem, true);
+            calc_flags(getA(), mem, 0, true);
             setA(getA() - mem);
             addClockCounter(8);
             break;
@@ -592,7 +592,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         {
             uint8_t mem = readByteMem(getHL());
             uint8_t carry = getFlag(FLAG_C);
-            calc_flags(getA(), mem - carry, true);
+            calc_flags(getA(), mem, carry, true);
             setA(getA() - mem - carry);
             addClockCounter(8);
             break;
@@ -712,7 +712,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         case 0xbe://CP (HL)   8 cycles   Z 1 H C
         {
             uint8_t mem = readByteMem(getHL());
-            calc_flags(getA(), mem, true);
+            calc_flags(getA(), mem, 0, true);
             addClockCounter(8);
             break;
         }
@@ -745,7 +745,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         {
             uint8_t mem = readByteMem(getCP());
             incCP();
-            calc_flags(getA(), mem, false);
+            calc_flags(getA(), mem, 0, false);
             setA(getA() + mem);
             addClockCounter(8);
             break;
@@ -796,7 +796,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             uint8_t mem = readByteMem(getCP());
             incCP();
             uint8_t carry = getFlag(FLAG_C);
-            calc_flags(getA(), mem + carry, false);
+            calc_flags(getA(), mem, carry, false);
             setA(getA() + mem + carry);
             addClockCounter(8);
             break;
@@ -826,7 +826,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         {
             uint8_t mem = readByteMem(getCP());
             incCP();
-            calc_flags(getA(), mem, true);
+            calc_flags(getA(), mem, 0, true);
             setA(getA() - mem);
             addClockCounter(8);
             break;
@@ -861,7 +861,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             uint8_t mem = readByteMem(getCP());
             incCP();
             uint8_t carry = getFlag(FLAG_C);
-            calc_flags(getA(), mem - carry, true);
+            calc_flags(getA(), mem, carry, true);
             setA(getA() - mem - carry);
             addClockCounter(8);
             break;
@@ -915,8 +915,8 @@ void Z80::executeInstruction(uint8_t opcode) {
             incCP();
             int16_t result = getSP() + mem;
 
-            setFlagCond(FLAG_C, (result & 0x100) == 1);
-            setFlagCond(FLAG_H, (result & 0x08) == 1);
+            setFlagCond(FLAG_H, (getSP() & 0x0F) + (mem & 0x0F) > 0x0F);
+            setFlagCond(FLAG_C, (getSP() & 0xFF) + (mem & 0xFF) > 0xFF);
             resetFlag(FLAG_N);
             resetFlag(FLAG_Z);
 
@@ -1008,8 +1008,7 @@ void Z80::executeInstruction(uint8_t opcode) {
             setHL((uint16_t) result);
             resetFlag(FLAG_Z | FLAG_N);
 
-            setFlagCond(FLAG_C, (result & 0x100) == 1);
-            setFlagCond(FLAG_H, (result & 0x08) == 1);
+            setFlagCond(FLAG_H, (getSP() & 0x0F) + (r8 & 0x0F) > 0x0F);
             addClockCounter(12);
             break;
         }
@@ -1040,7 +1039,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         {
             uint8_t mem = readByteMem(getCP());
             incCP();
-            calc_flags(getA(),mem, true);
+            calc_flags(getA(), mem, 0, true);
             addClockCounter(8);
             break;
         }
@@ -1957,9 +1956,10 @@ void Z80::op_ld_ptr_r16_r8(uint16_t reg16, uint8_t reg8) {
     addClockCounter(8);
 }
 
-void Z80::calc_flags(uint8_t a, uint8_t b, bool sub) {
-    uint16_t result = !sub ? a + b : a - b;
-    uint8_t lb = (uint8_t) (!sub ? ((a & 0x0F) + (b & 0x0F)) : ((a & 0x0F) - (b & 0x0F)));
+void Z80::calc_flags(uint8_t a, uint8_t b, uint8_t carry, bool sub) {
+    uint16_t result = !sub ? a + b + carry : a - b - carry;
+    uint8_t lb = (uint8_t) (!sub ? ((a & 0x0F) + (b & 0x0F) + carry) : ((a & 0x0F) - (b & 0x0F) - carry));
+
     setFlagCond(FLAG_C, (result & 0x100) != 0); // Number greater than unsigned 8 bits
     setFlagCond(FLAG_H, (lb & 0x10) != 0);
     setFlagCond(FLAG_N, sub);
@@ -1975,27 +1975,27 @@ void Z80::op_add_hl_r16(uint16_t reg16) {
 }
 
 void Z80::op_add_a_r8(uint8_t reg) {
-    calc_flags(getA(), reg, false);
+    calc_flags(getA(), reg, 0, false);
     setA(getA() + reg);
     addClockCounter(4);
 }
 
 void Z80::op_adc_a_r8(uint8_t reg) {
     uint8_t carry = getFlag(FLAG_C);
-    calc_flags(getA(), reg + carry, false);
+    calc_flags(getA(), reg, carry, false);
     setA(getA() + reg + carry);
     addClockCounter(4);
 }
 
 void Z80::op_sub_a_r8(uint8_t reg) {
-    calc_flags(getA(), reg, true);
+    calc_flags(getA(), reg, 0, true);
     setA(getA() - reg);
     addClockCounter(4);
 }
 
 void Z80::op_sbc_a_r8(uint8_t reg) {
     uint8_t carry = getFlag(FLAG_C);
-    calc_flags(getA(), reg - carry, true);
+    calc_flags(getA(), reg, carry, true);
     setA(getA() - reg - carry);
     addClockCounter(4);
 }
@@ -2023,7 +2023,7 @@ void Z80::op_or_a_r8(uint8_t reg) {
 }
 
 void Z80::op_cp_a_r8(uint8_t reg) {
-    calc_flags(getA(), reg, true);
+    calc_flags(getA(), reg, 0, true);
     addClockCounter(4);
 }
 
@@ -2147,7 +2147,7 @@ void Z80::op_sla_r(uint8_t *reg) {
 
 void Z80::op_sra_r(uint8_t *reg) {
     uint8_t b7 = (uint8_t) ((*reg) & 0x80);
-    setFlagCond(FLAG_C, (*reg & 0x01) != 0);
+    setFlagCond(FLAG_C, (bool) (*reg & 0x01));
     resetFlag(FLAG_N | FLAG_H);
     (*reg) = b7 << 7| (*reg >> 1);
     setFlagCond(FLAG_Z, *reg == 0);
