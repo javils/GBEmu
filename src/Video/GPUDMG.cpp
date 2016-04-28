@@ -204,7 +204,7 @@ void GPUDMG::renderSprites() {
 
             int8_t lineSprite = lyCounter - (int8_t) spriteY;
             if (yFlip) {
-                lineSprite -= height;
+                lineSprite -= height - 1;
                 lineSprite *= -1;
             }
 
@@ -217,7 +217,7 @@ void GPUDMG::renderSprites() {
                 uint8_t colorBit = tileX;
 
                 if (xFlip) {
-                    colorBit -= height;
+                    colorBit -= height - 1;
                     colorBit *= -1;
                 }
 
@@ -227,10 +227,11 @@ void GPUDMG::renderSprites() {
                 color <<= 1;
                 color |= (uint8_t) ((byte2 & colorBit) ? 1 : 0);
 
-                COLORS col = getColor(color, palette);
-
-                if (col == WHITE)
+                //< Color 0 is transparent.
+                if (color == 0x0)
                     continue;
+
+                COLORS col = getColor(color, palette);
 
                 uint8_t xPosition = spriteX + tileX;
 

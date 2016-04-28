@@ -68,7 +68,6 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
             IOPorts[regIO - 0xFF00] = new_lcdc;
             if (IsSetBit(new_lcdc, 7)) {
                 gpuDMG->enableLCD(true);
-                gpuDMG->renderScanLine();
             }
             else {
                 setIOReg(LY, 0x0);

@@ -27,7 +27,7 @@ void MBC1::writeByte(uint16_t address, uint8_t value) {
         case 0x5000:
         {
             value &= 0x03;
-            if (memory->getMBCMode()) {   // RAM
+            if (mbcMode) {   // RAM
                 memory->setSelectedRAMBank(value);
                 //TODO: ¿Check if the RAM bank is greater than totalRAMBank - 1?
             }
@@ -44,7 +44,7 @@ void MBC1::writeByte(uint16_t address, uint8_t value) {
         }
         case 0x6000:
         case 0x7000:
-            memory->setMBCMode((uint8_t) (value & 1));
+            mbcMode = ((uint8_t) (value & 1));
             break;
         case 0xA000:
         case 0xB000:

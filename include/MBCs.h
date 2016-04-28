@@ -23,7 +23,8 @@ public:
  * Memory Bank Controller 1
  */
 class MBC1 : public MemoryBankController {
-
+private:
+    uint8_t mbcMode;
 public:
     MBC1(BasicMemory *memory) : MemoryBankController(memory) { }
 

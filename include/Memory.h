@@ -39,9 +39,6 @@ public:
     inline void setNumROMBanks(uint8_t banks) { numROMBanks = banks; }
     inline void setNumRAMBanks(uint8_t banks) { numRAMBanks = banks; }
 
-    inline uint8_t getMBCMode() { return mbcMode; }
-    inline void setMBCMode(uint8_t mode) { mbcMode = mode; }
-
 
     //< Helper function to fill memory with random values.
     auto fillRandom(){
@@ -71,8 +68,6 @@ private:
 
     uint8_t selectedROMBank;    //< Current selected ROM bank.
     uint8_t selectedRAMBank;    //< Current selected RAM bank.
-
-    uint8_t mbcMode;            //< MBC Mode 0 => ROM, 1 => RAM
 
 };
 

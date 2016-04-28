@@ -156,7 +156,7 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
         case 0x5000:
         case 0x6000:
         case 0x7000:
-            return ROMBanks[getSelectedROMBank()][address - 0x4000];
+            return ROMBanks[getSelectedROMBank() - 1][address - 0x4000];
         case 0x8000:
         case 0x9000:
             return VideoRAM[address - 0x8000];
