@@ -164,23 +164,21 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         case 0x27://DAA   4 cycles   Z - 0 C
         {
-            uint8_t correction = 0x0;
 
-            if (getA() > 0x99 || getFlag(FLAG_C)) {
-                correction |= 0x60;
-                setFlag(FLAG_C);
+            if (getFlag(FLAG_N)) {
+                if (getFlag(FLAG_C))
+                    (*refA()) -= 0x60;
+                if (getFlag(FLAG_H))
+                    (*refA()) -= 0x06;
             }
-            else
-                resetFlag(FLAG_C);
-
-            if ((getA() & 0x0F) > 9 || getFlag(FLAG_H))
-                correction |= 0x06;
-
-            if (getFlag(FLAG_N) == 0)
-                setA(getA() + correction);
-            else
-                setA(getA() - correction);
-
+            else {
+                if (getFlag(FLAG_C) || (getA() & 0xFF) > 0x99) {
+                    (*refA()) += 0x60;
+                    setFlag(FLAG_C);
+                }
+                if (getFlag(FLAG_H) || (getA() & 0x0F) > 0x09)
+                    (*refA()) += 0x06;
+            }
             setFlagCond(FLAG_Z, getA() == 0);
             resetFlag(FLAG_H);
             addClockCounter(4);
@@ -971,6 +969,7 @@ void Z80::executeInstruction(uint8_t opcode) {
         }
         case 0xf1://POP AF   12 cycles   Z N H C
             op_pop_r16(refAF());
+            setF((uint8_t) (getF() & 0xF0));
             break;
         case 0xf2://LD A,(0xFF00 + C)   8 cycles   - - - -
             setA(readByteMem((uint16_t) (0xFF00 + getC())));
@@ -1002,13 +1001,14 @@ void Z80::executeInstruction(uint8_t opcode) {
             break;
         case 0xf8://LD HL,SP+r8   12 cycles   0 0 H C
         {
-            int8_t r8 = readByteMem(getCP());
+            int8_t r8 = (int8_t) readByteMem(getCP());
             incCP();
             int16_t result = getSP() + r8;
             setHL((uint16_t) result);
             resetFlag(FLAG_Z | FLAG_N);
 
             setFlagCond(FLAG_H, (getSP() & 0x0F) + (r8 & 0x0F) > 0x0F);
+            setFlagCond(FLAG_C, (getSP() & 0xFF) + (r8 & 0xFF) > 0xFF);
             addClockCounter(12);
             break;
         }
@@ -1242,9 +1242,11 @@ void Z80::executeCBInstruction(uint8_t cbopcode) {
         {
             uint8_t mem = readByteMem(getHL());
             uint8_t b7 = (uint8_t) (mem & 0x80);
-            setFlagCond(FLAG_C, (mem & 0x01) != 0);
-            resetFlag(FLAG_N | FLAG_H);
-            mem = (b7 << 7) | mem >> 1;
+            uint8_t b0 = (uint8_t) (mem & 0x01);
+            resetFlag(FLAG_H | FLAG_N);
+            setFlagCond(FLAG_C, b0 != 0);
+            mem >>= 1;
+            mem |= b7;
             writeByteMem(getHL(), mem);
             setFlagCond(FLAG_Z, mem == 0);
             addClockCounter(16);
@@ -2147,10 +2149,12 @@ void Z80::op_sla_r(uint8_t *reg) {
 
 void Z80::op_sra_r(uint8_t *reg) {
     uint8_t b7 = (uint8_t) ((*reg) & 0x80);
-    setFlagCond(FLAG_C, (bool) (*reg & 0x01));
-    resetFlag(FLAG_N | FLAG_H);
-    (*reg) = b7 << 7| (*reg >> 1);
-    setFlagCond(FLAG_Z, *reg == 0);
+    uint8_t b0 = (uint8_t) ((*reg) & 0x01);
+    resetFlag(FLAG_H | FLAG_N);
+    setFlagCond(FLAG_C, b0 != 0);
+    ((*reg)) >>= 1;
+    ((*reg)) |= b7;
+    setFlagCond(FLAG_Z, (*reg) == 0);
     addClockCounter(8);
 }
 
@@ -2172,14 +2176,14 @@ void Z80::op_srl_r(uint8_t *reg) {
 void Z80::op_bit_n_r(uint8_t n, uint8_t reg) {
     resetFlag(FLAG_N);
     setFlag(FLAG_H);
-    setFlagCond(FLAG_Z, (reg & (1 << n)) != 0);
+    setFlagCond(FLAG_Z, (reg & (0x1 << n)) == 0);
     addClockCounter(8);
 }
 
 void Z80::op_bit_n_ptr_HL(uint8_t n) {
     resetFlag(FLAG_N);
     setFlag(FLAG_H);
-    setFlagCond(FLAG_Z, (readByteMem(getHL()) & (1 << n)) != 0);
+    setFlagCond(FLAG_Z, (readByteMem(getHL()) & (1 << n)) == 0);
     addClockCounter(16);
 }
 

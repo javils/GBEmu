@@ -187,13 +187,14 @@ public:
     inline void setCP(uint16_t value) { CP->val = value; }
     inline void setSP(uint16_t value) { SP->val = value; }
 
-    inline void setAF(uint16_t value) { AF->val = value; }
+    inline void setAF(uint16_t value) { AF->val = (uint16_t) (value & 0xFFF0); }
     inline void setBC(uint16_t value) { BC->val = value; }
     inline void setDE(uint16_t value) { DE->val = value; }
     inline void setHL(uint16_t value) { HL->val = value; }
 
     inline void setA(uint8_t value) { AF->bytes.h = value; }
-    inline void setF(uint8_t value) { AF->bytes.l = value; }
+
+    inline void setF(uint8_t value) { AF->bytes.l = (uint8_t) (value & 0xF0); }
     inline void setB(uint8_t value) { BC->bytes.h = value; }
     inline void setC(uint8_t value) { BC->bytes.l = value; }
     inline void setD(uint8_t value) { DE->bytes.h = value; }
