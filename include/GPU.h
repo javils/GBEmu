@@ -69,6 +69,6 @@ protected:
 
     bool lcdEnable;
 
-    virtual void update(uint8_t cycles) = 0;
+    virtual bool update(uint8_t cycles) = 0;
 };
 #endif //GBEMU_VIDEO_H

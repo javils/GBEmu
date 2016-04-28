@@ -4,7 +4,7 @@
 
 #include <GPUDMG.h>
 
-void GPUDMG::update(uint8_t cycles) {
+bool GPUDMG::update(uint8_t cycles) {
 
     if (!isLCDEnable()) {
         lyCounter = 0;
@@ -20,7 +20,7 @@ void GPUDMG::update(uint8_t cycles) {
             ioHandler->getCPU()->requestInterrupt(LCD_STAT_INT);
 
         //< If we have the LCD disabled, not update ly counter with clocks
-        return;
+        return false;
     }
 
     //< Update GPU clock.
@@ -47,6 +47,7 @@ void GPUDMG::update(uint8_t cycles) {
 
                     //< Now we are in VBLANK, request the correspond interrupt.
                     ioHandler->getCPU()->requestInterrupt(VBLANK_INT);
+                    return true;
                 }
                 else {
                     gpuMode = SCAN_OAM;
@@ -118,6 +119,7 @@ void GPUDMG::update(uint8_t cycles) {
             // IMPOSSIBLE STAY HERE
             break;
     }
+    return false;
 }
 
 void GPUDMG::renderScanLine() {
@@ -186,7 +188,7 @@ void GPUDMG::renderSprites() {
             uint16_t spriteDataAddr = (uint16_t) (0xFE00 + (sprite << 2));
             uint8_t spriteY = (uint8_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) - 16);
 
-            if (spriteY > lyCounter || (spriteY + height) < lyCounter)
+            if (spriteY > lyCounter || (spriteY + height) <= lyCounter)
                 continue;
 
             spriteDataAddr++;
@@ -195,7 +197,7 @@ void GPUDMG::renderSprites() {
             uint8_t tileLocation = ioHandler->getCPU()->readByteMem(spriteDataAddr);
             spriteDataAddr++;
             uint8_t attributes = ioHandler->getCPU()->readByteMem(spriteDataAddr);
-            bool aboveBG = IsSetBit(attributes, 7);
+            bool behindBG = IsSetBit(attributes, 7);
             bool yFlip = IsSetBit(attributes, 6);
             bool xFlip = IsSetBit(attributes, 5);
             IOHandler::IOREGS palette = IsSetBit(attributes, 4) ? IOHandler::OBP1 : IOHandler::OBP0;
@@ -211,15 +213,15 @@ void GPUDMG::renderSprites() {
             tileDataAddress++;
             uint8_t byte2 = ioHandler->getCPU()->readByteMem(tileDataAddress);
 
-            for (int8_t tileX = 7; tileX >= 0; tileX--) {
-                int8_t colorBit = tileX;
+            for (uint8_t tileX = 0; tileX < 8; tileX++) {
+                uint8_t colorBit = tileX;
 
                 if (xFlip) {
                     colorBit -= height;
                     colorBit *= -1;
                 }
 
-                colorBit = (uint8_t) (0x1 << colorBit);
+                colorBit = (uint8_t) (0x1 << ((~colorBit) & 0x07));
 
                 uint8_t color = (uint8_t) ((byte1 & colorBit) ? 1 : 0);
                 color <<= 1;
@@ -230,7 +232,16 @@ void GPUDMG::renderSprites() {
                 if (col == WHITE)
                     continue;
 
-                lcd->setPixelColor(spriteX - tileX + height, lyCounter, col);
+                uint8_t xPosition = spriteX + tileX;
+
+                //< If behindBG is active and the background/windows color != WHITE then not show sprite.
+                if (behindBG && (lcd->getScreenBuffer()[lyCounter][xPosition] != WHITE))
+                    continue;
+
+                if (xPosition < 0 || xPosition > LCD::SCREEN_WIDTH)
+                    continue;
+
+                lcd->setPixelColor(xPosition, lyCounter, col);
             }
         }
     }
@@ -243,10 +254,10 @@ GPUDMG::COLORS GPUDMG::getColor(uint8_t colorNum, IOHandler::IOREGS paletteReg) 
     //< 0 => 0, 1 bits, 1 => 2, 3 bits, 2 => 4, 5 bits, 3 => 6, 7 bits.
     switch (colorNum) {
         case 0:
-            significantBits = 0x02;
+            significantBits = 0x03;
             break;
         case 1:
-            significantBits = 0x12;
+            significantBits = 0x0C;
             break;
         case 2:
             significantBits = 0x30;

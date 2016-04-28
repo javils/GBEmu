@@ -21,7 +21,8 @@ public:
         DARK_GREY,
         BLACK
     };
-    void update(uint8_t cycles);
+
+    bool update(uint8_t cycles);
 
     void DisableLCD();
     void renderScanLine();

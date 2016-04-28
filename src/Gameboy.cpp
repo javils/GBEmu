@@ -39,12 +39,13 @@ screen_t GameBoy::step() {
     uint32_t currentCycle = 0;
     uint32_t instCycles = 0;
     cpu->setClockCounter(0);
-    while (cpu->getClockCounter() < TICKS_PER_FRAME) {
+    bool vblank = false;
+    while (!vblank) {
         currentCycle = cpu->getClockCounter();
         cpu->step();
         instCycles = cpu->getClockCounter() - currentCycle;
         timer->update((uint16_t) instCycles);
-        gpuDMG->update((uint8_t) instCycles);
+        vblank = gpuDMG->update((uint8_t) instCycles);
         input->update((uint8_t) instCycles);
     }
 
