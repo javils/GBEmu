@@ -36,7 +36,7 @@ bool GPUDMG::update(uint8_t cycles) {
 
                 uint8_t stat = ioHandler->getIOReg(IOHandler::STAT);
 
-                if (lyCounter == 143)   //< End of the visible screen
+                if (lyCounter == 144)   //< End of the visible screen
                 {
                     gpuMode = VBLANK;
                     stat &= 0xFC;
@@ -47,6 +47,7 @@ bool GPUDMG::update(uint8_t cycles) {
 
                     //< Now we are in VBLANK, request the correspond interrupt.
                     ioHandler->getCPU()->requestInterrupt(VBLANK_INT);
+                    windowLine = 0;
                     return true;
                 }
                 else {
@@ -124,13 +125,17 @@ bool GPUDMG::update(uint8_t cycles) {
 
 void GPUDMG::renderScanLine() {
     if (isLCDEnable()) {
-        renderBGAndWindow();
+        renderBG();
+        renderWindow();
         renderSprites();
     }
 }
 
-void GPUDMG::renderBGAndWindow() {
+void GPUDMG::renderBG() {
     uint8_t lcdc = ioHandler->getIOReg(IOHandler::LCDC);
+
+    if (!IsSetBit(lcdc, 0))
+        return;
 
     uint8_t scx = ioHandler->getIOReg(IOHandler::SCX);
     uint8_t scy = ioHandler->getIOReg(IOHandler::SCY);
@@ -159,7 +164,6 @@ void GPUDMG::renderBGAndWindow() {
                 tileId += 128;
         }
 
-        //printf("\n%04x: %02x (%x)",tilesMapAddres, tileId, lyCounter);
         tilesDataAddres += (tileId << 4) + ((realY % 8) << 1);
 
         uint8_t byte1 = ioHandler->getCPU()->readByteMem(tilesDataAddres);
@@ -168,13 +172,84 @@ void GPUDMG::renderBGAndWindow() {
 
         uint8_t colorBit = (uint8_t) (0x1 << (7 - (realX % 8)));
 
-        uint8_t color = (uint8_t) ((byte1 & colorBit) ? 1 : 0);
+        uint8_t color = (uint8_t) ((byte2 & colorBit) ? 1 : 0);
         color <<= 1;
-        color |= (uint8_t) ((byte2 & colorBit) ? 1 : 0);
+        color |= (uint8_t) ((byte1 & colorBit) ? 1 : 0);
 
-        lcd->setPixelColor(x, lyCounter, color);
+        uint8_t xPos = x;
+
+        if (xPos < 0 || xPos >= LCD::SCREEN_WIDTH)
+            continue;
+
+        lcd->setPixelColor(xPos, lyCounter, getColor(color, IOHandler::BGP));
 
     }
+}
+
+void GPUDMG::renderWindow() {
+
+    if (windowLine > LCD::SCREEN_HEIGHT)
+        return;
+
+    uint8_t lcdc = ioHandler->getIOReg(IOHandler::LCDC);
+
+    if (!IsSetBit(lcdc, 0) || !IsSetBit(lcdc, 5))
+        return;
+
+    int16_t wx = (int16_t) (ioHandler->getIOReg(IOHandler::WX) - 7);
+
+    if (wx > LCD::SCREEN_WIDTH)
+        return;
+
+    uint8_t wy = ioHandler->getIOReg(IOHandler::WY);
+
+    if (wy > LCD::SCREEN_WIDTH || wy > lyCounter)
+        return;
+
+    uint16_t tilesMap = (uint16_t) (IsSetBit(lcdc, 6) ? 0x9C00 : 0x9800);
+    uint16_t tilesData = (uint16_t) (IsSetBit(lcdc, 4) ? 0x8000 : 0x8800);
+
+    uint16_t tilesMapAddres;
+    uint16_t tilesDataAddres;
+
+    for (uint8_t x = 0; x < LCD::SCREEN_WIDTH; x++) {
+        tilesDataAddres = tilesData;
+        tilesMapAddres = tilesMap;
+        int16_t realX = x;
+        int16_t realY = windowLine;
+        int16_t tileX = realX >> 3; //< x/8
+        int16_t tileY = (realY >> 3) << 5;
+        tilesMapAddres += tileX + tileY;
+
+        uint8_t tileId = ioHandler->getCPU()->readByteMem(tilesMapAddres);
+
+        if (tilesData == 0x8800) {
+            if (IsSetBit(tileId, 7))
+                tileId &= 0x7F;
+            else
+                tileId += 128;
+        }
+
+        tilesDataAddres += (tileId << 4) + ((realY % 8) << 1);
+
+        uint8_t byte1 = ioHandler->getCPU()->readByteMem(tilesDataAddres);
+        tilesDataAddres++;
+        uint8_t byte2 = ioHandler->getCPU()->readByteMem(tilesDataAddres);
+
+        uint8_t colorBit = (uint8_t) (0x1 << (7 - (realX % 8)));
+
+        uint8_t color = (uint8_t) ((byte2 & colorBit) ? 1 : 0);
+        color <<= 1;
+        color |= (uint8_t) ((byte1 & colorBit) ? 1 : 0);
+
+        uint8_t xPos = (uint8_t) (x + wx);
+
+        if (xPos < 0 || xPos >= LCD::SCREEN_WIDTH)
+            continue;
+
+        lcd->setPixelColor(xPos, lyCounter, getColor(color, IOHandler::BGP));
+    }
+    windowLine++;
 }
 
 void GPUDMG::renderSprites() {
@@ -223,20 +298,20 @@ void GPUDMG::renderSprites() {
 
                 colorBit = (uint8_t) (0x1 << ((~colorBit) & 0x07));
 
-                uint8_t color = (uint8_t) ((byte1 & colorBit) ? 1 : 0);
+                uint8_t color = (uint8_t) ((byte2 & colorBit) ? 1 : 0);
                 color <<= 1;
-                color |= (uint8_t) ((byte2 & colorBit) ? 1 : 0);
+                color |= (uint8_t) ((byte1 & colorBit) ? 1 : 0);
 
                 //< Color 0 is transparent.
                 if (color == 0x0)
                     continue;
 
-                COLORS col = getColor(color, palette);
+                uint8_t col = getColor(color, palette);
 
                 uint8_t xPosition = spriteX + tileX;
 
-                //< If behindBG is active and the background/windows color != WHITE then not show sprite.
-                if (behindBG && (lcd->getScreenBuffer()[lyCounter][xPosition] != WHITE))
+                //< If behindBG is active and the background/windows color != 0 (WHITE) then not show sprite.
+                if (behindBG && (lcd->getScreenBuffer()[lyCounter][xPosition] != 0x0))
                     continue;
 
                 if (xPosition < 0 || xPosition > LCD::SCREEN_WIDTH)
@@ -248,7 +323,7 @@ void GPUDMG::renderSprites() {
     }
 }
 
-GPUDMG::COLORS GPUDMG::getColor(uint8_t colorNum, IOHandler::IOREGS paletteReg) {
+uint8_t GPUDMG::getColor(uint8_t colorNum, IOHandler::IOREGS paletteReg) {
     uint8_t palette = ioHandler->getIOReg(paletteReg);
     uint8_t significantBits = 0;
 
@@ -272,7 +347,7 @@ GPUDMG::COLORS GPUDMG::getColor(uint8_t colorNum, IOHandler::IOREGS paletteReg) 
 
     uint8_t color = (palette & significantBits) >> (colorNum << 1);
 
-    return (COLORS) color;
+    return color;
 }
 
 void GPUDMG::DisableLCD() {

@@ -63,6 +63,7 @@ protected:
     IOHandler * ioHandler;
 
     uint8_t lyCounter;
+    uint8_t windowLine;
     uint16_t gpuClock;
     GPUModes gpuMode;
     LCD *lcd;
