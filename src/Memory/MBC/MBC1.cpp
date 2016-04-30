@@ -13,7 +13,7 @@ void MBC1::writeByte(uint16_t address, uint8_t value) {
             break;
         case 0x2000:
         case 0x3000: {
-            uint8_t actual = memory->getSelectedROMBank();
+            uint16_t actual = memory->getSelectedROMBank();
             uint8_t lower = (uint8_t) (value & 0x1F);
             actual &= ~0x1F;   //< Keep upper bites and clear lower bits.
             actual |= lower;
@@ -32,7 +32,7 @@ void MBC1::writeByte(uint16_t address, uint8_t value) {
                 //TODO: ¿Check if the RAM bank is greater than totalRAMBank - 1?
             }
             else {  //ROM
-                uint8_t actual = memory->getSelectedROMBank();
+                uint16_t actual = memory->getSelectedROMBank();
                 actual &= 0x1F;   //< Keep lower bites and clear up bits.
                 actual |= value << 5;
                 //TODO: ¿Check if the ROM bank is greater than totalROMBank - 1?

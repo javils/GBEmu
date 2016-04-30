@@ -24,7 +24,7 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
 
     //< Init switchable ROM banks. The first bank is in 0x4000
     if ((getNumROMBanks() - 1) > 0) {
-        ROMBanks.resize((uint8_t) (getNumROMBanks() - 1));
+        ROMBanks.resize((uint16_t) (getNumROMBanks() - 1));
         for (uint8_t i = 1; i < getNumROMBanks(); i++)
             copy_n((ROM.begin() + 0x4000 * i), 0x4000, ROMBanks[i - 1].begin());
     }
@@ -68,12 +68,16 @@ void MemoryDMG::selectMBC(Cartridge::CartrigdeType cartridgeType) {
             mbc.reset(new MBC1(this));
             break;
         }
-        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC2:
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC2: {
+            mbc.reset(new MBC2(this));
             break;
+        }
         case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC3:
             break;
-        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC5:
+        case Cartridge::CartrigdeType::CARTRIDGETYPE_MBC5: {
+            mbc.reset(new MBC5(this));
             break;
+        }
         case Cartridge::CartrigdeType::CARTRIDGETYPE_MMM01:
             break;
         default:

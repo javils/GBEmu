@@ -28,16 +28,21 @@ public:
     inline void enableRAM(bool enable) { RAMEnabled = enable; }
     inline bool isRAMEnabled() { return RAMEnabled; }
 
-    inline uint8_t getSelectedRAMBank() { return selectedRAMBank; }
-    inline void setSelectedRAMBank(uint8_t ramBank) { selectedRAMBank = ramBank; }
-    inline uint8_t getSelectedROMBank() { return selectedROMBank; }
-    inline void setSelectedROMBank(uint8_t romBank) { selectedROMBank = romBank; }
+    inline uint16_t getSelectedRAMBank() { return selectedRAMBank; }
 
-    inline uint8_t getNumROMBanks() { return numROMBanks; }
-    inline uint8_t getNumRAMBanks() { return numRAMBanks; }
+    inline void setSelectedRAMBank(uint16_t ramBank) { selectedRAMBank = ramBank; }
 
-    inline void setNumROMBanks(uint8_t banks) { numROMBanks = banks; }
-    inline void setNumRAMBanks(uint8_t banks) { numRAMBanks = banks; }
+    inline uint16_t getSelectedROMBank() { return selectedROMBank; }
+
+    inline void setSelectedROMBank(uint16_t romBank) { selectedROMBank = romBank; }
+
+    inline uint16_t getNumROMBanks() { return numROMBanks; }
+
+    inline uint16_t getNumRAMBanks() { return numRAMBanks; }
+
+    inline void setNumROMBanks(uint16_t banks) { numROMBanks = banks; }
+
+    inline void setNumRAMBanks(uint16_t banks) { numRAMBanks = banks; }
 
 
     //< Helper function to fill memory with random values.
@@ -63,11 +68,11 @@ public:
 private:
     bool RAMEnabled;
 
-    uint8_t numROMBanks;
-    uint8_t numRAMBanks;
+    uint16_t numROMBanks;
+    uint16_t numRAMBanks;
 
-    uint8_t selectedROMBank;    //< Current selected ROM bank.
-    uint8_t selectedRAMBank;    //< Current selected RAM bank.
+    uint16_t selectedROMBank;    //< Current selected ROM bank.
+    uint16_t selectedRAMBank;    //< Current selected RAM bank.
 
 };
 

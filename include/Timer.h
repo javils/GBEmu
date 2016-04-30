@@ -26,7 +26,7 @@ private:
     IOHandler * ioHandler;
 
     uint16_t divCycles;
-    uint8_t TIMACycles;
+    uint16_t TIMACycles;
     uint16_t frequency;
 };
 

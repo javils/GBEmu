@@ -32,4 +32,31 @@ public:
     uint8_t readByte(uint16_t address);
 };
 
+/**
+ * Memory Bank Controller 2
+ */
+class MBC2 : public MemoryBankController {
+private:
+    uint8_t mbcMode;
+public:
+    MBC2(BasicMemory *memory) : MemoryBankController(memory) { }
+
+    void writeByte(uint16_t address, uint8_t value);
+
+    uint8_t readByte(uint16_t address);
+};
+
+/**
+ * Memory Bank Controller 5
+ */
+class MBC5 : public MemoryBankController {
+private:
+    uint8_t mbcMode;
+public:
+    MBC5(BasicMemory *memory) : MemoryBankController(memory) { }
+
+    void writeByte(uint16_t address, uint8_t value);
+
+    uint8_t readByte(uint16_t address);
+};
 #endif //GBEMU_MBC1_H
