@@ -26,7 +26,7 @@ class MBC1 : public MemoryBankController {
 private:
     uint8_t mbcMode;
 public:
-    MBC1(BasicMemory *memory) : MemoryBankController(memory) { }
+    MBC1(BasicMemory *memory) : MemoryBankController(memory), mbcMode(0) { }
 
     void writeByte(uint16_t address, uint8_t value);
     uint8_t readByte(uint16_t address);

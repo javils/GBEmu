@@ -74,7 +74,7 @@ bool GPUDMG::update(uint8_t cycles) {
 
                 uint8_t stat = ioHandler->getIOReg(IOHandler::STAT);
 
-                if (lyCounter > 153)
+                if (lyCounter == 153)
                 {
                     //< Restart the process
                     gpuClock = 0;
@@ -188,7 +188,7 @@ void GPUDMG::renderBG() {
 
 void GPUDMG::renderWindow() {
 
-    if (windowLine > LCD::SCREEN_HEIGHT)
+    if (windowLine > 143)
         return;
 
     uint8_t lcdc = ioHandler->getIOReg(IOHandler::LCDC);
@@ -198,12 +198,12 @@ void GPUDMG::renderWindow() {
 
     int16_t wx = (int16_t) (ioHandler->getIOReg(IOHandler::WX) - 7);
 
-    if (wx > LCD::SCREEN_WIDTH)
+    if (wx > 159)
         return;
 
     uint8_t wy = ioHandler->getIOReg(IOHandler::WY);
 
-    if (wy > LCD::SCREEN_WIDTH || wy > lyCounter)
+    if (wy > 143 || wy > lyCounter)
         return;
 
     uint16_t tilesMap = (uint16_t) (IsSetBit(lcdc, 6) ? 0x9C00 : 0x9800);
@@ -310,11 +310,11 @@ void GPUDMG::renderSprites() {
 
                 uint8_t xPosition = spriteX + tileX;
 
-                //< If behindBG is active and the background/windows color != 0 (WHITE) then not show sprite.
-                if (behindBG && (lcd->getScreenBuffer()[lyCounter][xPosition] != 0x0))
+                if (xPosition < 0 || xPosition >= LCD::SCREEN_WIDTH)
                     continue;
 
-                if (xPosition < 0 || xPosition > LCD::SCREEN_WIDTH)
+                //< If behindBG is active and the background/windows color != 0 (WHITE) then not show sprite.
+                if (behindBG && (lcd->getScreenBuffer()[lyCounter][xPosition] != 0x0))
                     continue;
 
                 lcd->setPixelColor(xPosition, lyCounter, col);

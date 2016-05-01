@@ -29,6 +29,8 @@ public:
     inline void setTimer(Timer * timer) { this->timer = timer; }
     inline void setGPU(GPUDMG * gpu) { this->gpuDMG = gpu; }
     inline void setInput(Input * input) { this->input = input; }
+
+    inline GPUDMG *getGPU() { return gpuDMG; }
 private:
     array<uint8_t, 0x4D> IOPorts;               //< 0xFF00 to 0xFF4B
 

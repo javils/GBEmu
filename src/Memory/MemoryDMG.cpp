@@ -100,6 +100,8 @@ void MemoryDMG::setByte(uint16_t address, uint8_t value) {
             break;
         case 0x8000:    // VIDEO
         case 0x9000:
+            if (ioHandler->getGPU()->getGPUMode() == GPUDMG::SCAN_VRAM)
+                return;
             VideoRAM[address - 0x8000] = value;
             break;
         case 0xA000:    // External RAM
@@ -121,6 +123,9 @@ void MemoryDMG::setByte(uint16_t address, uint8_t value) {
                 EchoRam[address - 0xE000] = value;
                 WorkRAM[address - 0xE000] = value;
             } else if (address < 0xFEA0) {
+                if (ioHandler->getGPU()->getGPUMode() == GPUDMG::SCAN_OAM ||
+                    ioHandler->getGPU()->getGPUMode() == GPUDMG::SCAN_VRAM)
+                    return;
                 OAMRam[address - 0xFE00] = value;   // OAM RAM
             } else if (address > 0xFEFF && address < 0xFF4C) {
                 ioHandler->writeIOReg((IOHandler::IOREGS) address, value);  // IO REGs
@@ -163,6 +168,8 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
             return ROMBanks[getSelectedROMBank() - 1][address - 0x4000];
         case 0x8000:
         case 0x9000:
+            if (ioHandler->getGPU()->getGPUMode() == GPUDMG::SCAN_VRAM)
+                return 0xFF;
             return VideoRAM[address - 0x8000];
         case 0xA000:
         case 0xB000:
@@ -175,8 +182,12 @@ uint8_t MemoryDMG::getByte(uint16_t address) {
         case 0xF000:
             if (address < 0xFE00)
                 return WorkRAM[address - 0xE000];
-            else if (address < 0xFEA0)
+            else if (address < 0xFEA0) {
+                if (ioHandler->getGPU()->getGPUMode() == GPUDMG::SCAN_OAM ||
+                    ioHandler->getGPU()->getGPUMode() == GPUDMG::SCAN_VRAM)
+                    return 0xFF;
                 return OAMRam[address - 0xFE00];
+            }
             else if (address > 0xFEFF && address < 0xFF4C)
                 return ioHandler->readIOReg((IOHandler::IOREGS) address);
             else if (address > 0xFF7F && address < 0xFFFF)
