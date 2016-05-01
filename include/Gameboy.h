@@ -15,6 +15,10 @@ public:
 
     void init(std::string filename);
 
+    void writeSave();
+
+    void loadSave();
+
     screen_t step();
 
     void KeyPressed(Input::Gameboy_Keys key);
@@ -24,6 +28,7 @@ public:
     inline Z80 *getCPU() { return cpu.get(); }
 
 private:
+    std::string filePath;
     unique_ptr<Cartridge> cart;
     unique_ptr<BasicMemory> mem;
     unique_ptr<Z80> cpu;

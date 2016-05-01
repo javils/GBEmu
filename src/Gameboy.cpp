@@ -6,6 +6,7 @@
 
 void GameBoy::init(std::string filename) {
     cart.reset(new Cartridge());
+    filePath = filename;
     bool loaded = cart->loadRom(filename);
     printf("\nCART TYPE: %02x\n", cart->getCartridgeType());
 
@@ -33,6 +34,8 @@ void GameBoy::init(std::string filename) {
     cpu->setHL(0x014D);
     cpu->setSP(0xFFFE);
 
+    loadSave();
+
 }
 
 screen_t GameBoy::step() {
@@ -58,4 +61,49 @@ void GameBoy::KeyPressed(Input::Gameboy_Keys key) {
 
 void GameBoy::KeyReleased(Input::Gameboy_Keys key) {
     input->KeyReleased(key);
+}
+
+void GameBoy::writeSave() {
+    if (cart->getRAMBanks() == 0 || !cart->hasBattery())
+        return;
+
+    std::string fileName = filePath;
+    fileName = fileName.replace(fileName.end() - 3, fileName.end(), ".sav");
+    ofstream file(fileName, ofstream::out | ofstream::binary);
+
+    if (!file.is_open()) {
+        printf("Couldn't save RAM.");   //< Throw exception.
+        return;
+    }
+
+    if (cart->getCartridgeType() == Cartridge::CARTRIDGETYPE_MBC2)
+        file.write(reinterpret_cast<char *>(mem->RAMBanks[0].data()), 0x200);
+    else
+        for (uint16_t i = 0; i < cart->getRAMBanks(); i++)
+            file.write(reinterpret_cast<char *>(cpu->getMem()->RAMBanks[i].data()), 0x2000);
+
+    file.close();
+}
+
+void GameBoy::loadSave() {
+
+    if (cart->getRAMBanks() == 0 || !cart->hasBattery())
+        return;
+
+    std::string fileName = filePath;
+    fileName = fileName.replace(fileName.end() - 3, fileName.end(), ".sav");
+    ifstream file(fileName, ifstream::out | ifstream::binary);
+
+    if (!file.is_open()) {
+        printf("Couldn't save RAM.");   //< Throw exception.
+        return;
+    }
+
+    if (cart->getCartridgeType() == Cartridge::CARTRIDGETYPE_MBC2)
+        file.read(reinterpret_cast<char *>(mem->RAMBanks[0].data()), 0x200);
+    else
+        for (uint16_t i = 0; i < cart->getRAMBanks(); i++)
+            file.read(reinterpret_cast<char *>(cpu->getMem()->RAMBanks[i].data()), 0x2000);
+
+    file.close();
 }

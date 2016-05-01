@@ -265,6 +265,8 @@ public:
      */
     void step();
 
+    BasicMemory *getMem() { return bus->getMem(); }
+
 };
 
 #endif //GBEMU_Z80_H

@@ -72,6 +72,23 @@ Cartridge::CartrigdeType Cartridge::readCartridgeType() {
             break;
     }
 
+    //< Has battery?
+    switch (header->getCartridgeType()) {
+        case 0x03:
+        case 0x06:
+        case 0x09:
+        case 0x0D:
+        case 0x0F:
+        case 0x10:
+        case 0x13:
+        case 0x1B:
+        case 0x1E:
+            battery = true;
+            break;
+        default:
+            battery = false;
+            break;
+    }
     return cartridgeType;
 }
 

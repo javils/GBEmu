@@ -44,6 +44,8 @@ public:
     inline uint8_t getROMBanks() { return romBanks; }
     inline uint8_t getRAMBanks() { return ramBanks; }
     inline uint8_t getOldLicenseCode() { return header->getOldLicenseCode(); }
+
+    inline bool hasBattery() { return battery; }
 private:
     /**
      * Cartridge header
@@ -128,6 +130,7 @@ private:
     CartrigdeType cartridgeType;
     uint8_t romBanks;
     uint8_t ramBanks;
+    bool battery;
 
     /**
      * Read the cartridge type of the header.

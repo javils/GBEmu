@@ -49,6 +49,8 @@ public:
      */
     uint16_t receiveWord(uint16_t address);
 
+    BasicMemory *getMem() { return mem.get(); }
+
 private:
     unique_ptr<BasicMemory> mem;
 };
