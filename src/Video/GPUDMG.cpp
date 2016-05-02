@@ -74,7 +74,7 @@ bool GPUDMG::update(uint8_t cycles) {
 
                 uint8_t stat = ioHandler->getIOReg(IOHandler::STAT);
 
-                if (lyCounter == 153)
+                if (lyCounter > LCD::SCREEN_HEIGHT_VBLANK)
                 {
                     //< Restart the process
                     gpuClock = 0;
@@ -261,15 +261,16 @@ void GPUDMG::renderSprites() {
 
         for (uint8_t sprite = 0; sprite < 40; sprite++) {
             uint16_t spriteDataAddr = (uint16_t) (0xFE00 + (sprite << 2));
-            uint8_t spriteY = (uint8_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) - 16);
+            int16_t spriteY = (int16_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) - 16);
 
             if (spriteY > lyCounter || (spriteY + height) <= lyCounter)
                 continue;
 
             spriteDataAddr++;
-            uint8_t spriteX = (uint8_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) - 8);
+            int16_t spriteX = (int16_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) - 8);
             spriteDataAddr++;
-            uint8_t tileLocation = ioHandler->getCPU()->readByteMem(spriteDataAddr);
+            uint8_t tileLocation = (uint8_t) (ioHandler->getCPU()->readByteMem(spriteDataAddr) &
+                                              ((height == 16) ? 0xFE : 0xFF));
             spriteDataAddr++;
             uint8_t attributes = ioHandler->getCPU()->readByteMem(spriteDataAddr);
             bool behindBG = IsSetBit(attributes, 7);
@@ -308,7 +309,7 @@ void GPUDMG::renderSprites() {
 
                 uint8_t col = getColor(color, palette);
 
-                uint8_t xPosition = spriteX + tileX;
+                int16_t xPosition = spriteX + tileX;
 
                 if (xPosition < 0 || xPosition >= LCD::SCREEN_WIDTH)
                     continue;
@@ -317,7 +318,7 @@ void GPUDMG::renderSprites() {
                 if (behindBG && (lcd->getScreenBuffer()[lyCounter][xPosition] != 0x0))
                     continue;
 
-                lcd->setPixelColor(xPosition, lyCounter, col);
+                lcd->setPixelColor((uint8_t) xPosition, lyCounter, col);
             }
         }
     }
