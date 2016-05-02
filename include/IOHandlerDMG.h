@@ -10,6 +10,7 @@
 #include "MemoryDMG.h"
 #include "GPUDMG.h"
 #include "Input.h"
+#include "Audio.h"
 
 class MemoryDMG;
 class Timer;
@@ -30,6 +31,8 @@ public:
     inline void setGPU(GPUDMG * gpu) { this->gpuDMG = gpu; }
     inline void setInput(Input * input) { this->input = input; }
 
+    inline void setAudio(Audio *audio) { this->audio = audio; }
+
     inline GPUDMG *getGPU() { return gpuDMG; }
 private:
     array<uint8_t, 0x4D> IOPorts;               //< 0xFF00 to 0xFF4B
@@ -37,5 +40,6 @@ private:
     Timer * timer;
     GPUDMG * gpuDMG;
     Input * input;
+    Audio *audio;
 };
 #endif //GBEMU_IOHANDLERDMG_H

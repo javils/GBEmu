@@ -8,7 +8,15 @@
 #include <string>
 #include "LCD.h"
 #include "IOHandlerDMG.h"
+#include "Audio.h"
 
+#include "../libs/blargg/Blip_Buffer.h"
+
+class Timer;
+
+class IOHandlerDMG;
+
+class Audio;
 class GameBoy {
 public:
     static const int TICKS_PER_FRAME = 70221;
@@ -19,13 +27,17 @@ public:
 
     void loadSave();
 
-    screen_t step();
+    screen_t step(std::function<void(blip_sample_t *, int)> f);
 
     void KeyPressed(Input::Gameboy_Keys key);
 
     void KeyReleased(Input::Gameboy_Keys key);
 
     inline Z80 *getCPU() { return cpu.get(); }
+
+    inline blip_sample_t *getSampleBuffer() { return audio->getSampleBuffer(); }
+
+    inline long getCountSampleBuffer() { return audio->getCountSampleBuffer(); }
 
 private:
     std::string filePath;
@@ -35,6 +47,7 @@ private:
     unique_ptr<Timer> timer;
     unique_ptr<GPUDMG> gpuDMG;
     unique_ptr<Input> input;
+    unique_ptr<Audio> audio;
     unique_ptr<IOHandlerDMG> ioHandler;
 };
 

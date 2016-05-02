@@ -78,6 +78,45 @@ void IOHandlerDMG::writeIOReg(IOREGS regIO, uint8_t value) {
             }
             break;
         }
+        case NR_10:
+        case NR_11:
+        case NR_12:
+        case NR_13:
+        case NR_14:
+        case NR_21:
+        case NR_22:
+        case NR_23:
+        case NR_24:
+        case NR_30:
+        case NR_31:
+        case NR_32:
+        case NR_33:
+        case NR_34:
+        case NR_41:
+        case NR_42:
+        case NR_43:
+        case NR_44:
+        case NR_50:
+        case NR_51:
+        case NR_52:
+        case WPR_0:
+        case WPR_1:
+        case WPR_2:
+        case WPR_3:
+        case WPR_4:
+        case WPR_5:
+        case WPR_6:
+        case WPR_7:
+        case WPR_8:
+        case WPR_9:
+        case WPR_A:
+        case WPR_B:
+        case WPR_C:
+        case WPR_D:
+        case WPR_E:
+        case WPR_F:
+            audio->writeAudio(regIO, value);
+            break;
         case STAT:
         {
             //< Three lower bits are read only
@@ -143,8 +182,47 @@ uint8_t IOHandlerDMG::readIOReg(IOREGS regIO) {
         {
             return input->Read();
         }
+        case NR_10:
+        case NR_11:
+        case NR_12:
+        case NR_13:
+        case NR_14:
+        case NR_21:
+        case NR_22:
+        case NR_23:
+        case NR_24:
+        case NR_30:
+        case NR_31:
+        case NR_32:
+        case NR_33:
+        case NR_34:
+        case NR_41:
+        case NR_42:
+        case NR_43:
+        case NR_44:
+        case NR_50:
+        case NR_51:
+        case NR_52:
+        case WPR_0:
+        case WPR_1:
+        case WPR_2:
+        case WPR_3:
+        case WPR_4:
+        case WPR_5:
+        case WPR_6:
+        case WPR_7:
+        case WPR_8:
+        case WPR_9:
+        case WPR_A:
+        case WPR_B:
+        case WPR_C:
+        case WPR_D:
+        case WPR_E:
+        case WPR_F:
+            audio->readAudio(regIO);
+            break;
         default:
             return IOPorts[regIO - 0xFF00];
     }
-
+    return 0xFF;
 }

@@ -14,6 +14,7 @@ void GameBoy::init(std::string filename) {
     timer.reset(new Timer());
     gpuDMG.reset(new GPUDMG());
     input.reset(new Input());
+    audio.reset(new Audio());
     mem.reset(new MemoryDMG(cart.get(), ioHandler.get()));
     cpu.reset(new Z80(move(mem)));
 
@@ -21,11 +22,13 @@ void GameBoy::init(std::string filename) {
     ioHandler->setTimer(timer.get());
     ioHandler->setCPU(cpu.get());
     ioHandler->setInput(input.get());
+    ioHandler->setAudio(audio.get());
 
     timer->setIOHandler(ioHandler.get());
     gpuDMG->setIOHandler(ioHandler.get());
     input->setIOHandler(ioHandler.get());
     input->Init();
+    audio->setIOHandler(ioHandler.get());
 
     cpu->setCP(0x100);
     cpu->setAF(0x01B0);
@@ -38,7 +41,7 @@ void GameBoy::init(std::string filename) {
 
 }
 
-screen_t GameBoy::step() {
+screen_t GameBoy::step(std::function<void(blip_sample_t *, int)> f) {
     uint32_t currentCycle = 0;
     uint32_t instCycles = 0;
     cpu->setClockCounter(0);
@@ -50,6 +53,7 @@ screen_t GameBoy::step() {
         timer->update((uint16_t) instCycles);
         vblank = gpuDMG->update((uint8_t) instCycles);
         input->update((uint8_t) instCycles);
+        audio->update((uint16_t) instCycles, f);
     }
 
     return gpuDMG->getLCD()->getScreenBuffer();

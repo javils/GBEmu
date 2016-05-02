@@ -58,7 +58,7 @@ public:
         WPR_C = 0xFF3C,         //< Sound Register - Waveform storage
         WPR_D = 0xFF3D,         //< Sound Register - Waveform storage
         WPR_E = 0xFF3E,         //< Sound Register - Waveform storage
-        WPR_F = 0xFF3E,         //< Sound Register - Waveform storage
+        WPR_F = 0xFF3F,         //< Sound Register - Waveform storage
         LCDC =  0xFF40,         //< LCD Control
         STAT =  0xFF41,         //< LCDC Status
         SCY =   0xFF42,         //< Scroll Y
