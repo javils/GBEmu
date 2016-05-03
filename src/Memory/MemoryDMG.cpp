@@ -9,7 +9,7 @@
 MemoryDMG::MemoryDMG(Cartridge *cartridge, IOHandlerDMG *ioHandler) {
     ROM = cartridge->getROM();
     setNumRAMBanks(cartridge->getRAMBanks());
-    setNumROMBanks(cartridge->getROMBanks());
+    setNumROMBanks((uint16_t) (cartridge->getROMBanks() - 1));
     cartrigdeType = cartridge->getCartridgeType();
 
     this->ioHandler = move(ioHandler);
@@ -23,10 +23,10 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
     copy_n(ROM.begin(), 0x4000, ROMBase.begin());
 
     //< Init switchable ROM banks. The first bank is in 0x4000
-    if ((getNumROMBanks() - 1) > 0) {
-        ROMBanks.resize((uint16_t) (getNumROMBanks() - 1));
-        for (uint8_t i = 1; i < getNumROMBanks(); i++)
-            copy_n((ROM.begin() + 0x4000 * i), 0x4000, ROMBanks[i - 1].begin());
+    if (getNumROMBanks() > 0) {
+        ROMBanks.resize(getNumROMBanks());
+        for (uint8_t i = 0; i < getNumROMBanks(); i++)
+            copy_n((ROM.begin() + 0x4000 * (i + 1)), 0x4000, ROMBanks[i].begin());
     }
 
     //< Init video ram.
@@ -49,7 +49,7 @@ void MemoryDMG::init(Cartridge::CartrigdeType cartrigdeType) {
 
     IERegister = 0x00;
 
-    setSelectedROMBank(0);
+    setSelectedROMBank(1);
     setSelectedRAMBank(0);
     enableRAM(false);
 
