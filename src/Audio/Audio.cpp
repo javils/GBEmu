@@ -21,6 +21,7 @@ void Audio::endFrame(std::function<void(blip_sample_t *, int)> f) {
 
     if (stereoBuffer->samples_avail() >= SAMPLE_BUFFER_SIZE) {
         count = stereoBuffer->read_samples(sampleBuffer, SAMPLE_BUFFER_SIZE);
-        f(sampleBuffer, (int) count);
+        if (f != nullptr)
+            f(sampleBuffer, (int) count);
     }
 }

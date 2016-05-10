@@ -9,7 +9,7 @@
 #include "../libs/blargg/Blip_Buffer.h"
 #include "../libs/blargg/Gb_Apu.h"
 #include "../libs/blargg/Multi_Buffer.h"
-#include "../tests/SoundQueue/Sound_Queue.h"
+#include "../libs/blargg/Sound_Queue.h"
 
 class Audio {
 public:
