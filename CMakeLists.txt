@@ -23,5 +23,5 @@ set(GLOBAL_SRC_FILES ${CMAKE_SOURCE_DIR}/src)
 # Add directories
 add_subdirectory(src)
 add_subdirectory(tests)
-add_subdirectory(java)
+add_subdirectory(gui)
 add_subdirectory(libs/blargg)
