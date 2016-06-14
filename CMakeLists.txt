@@ -1,12 +1,7 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.0)
 project(GBEmu)
 
-# Need JNI and Java
-find_package(JNI REQUIRED)
-find_package(JAVA REQUIRED)
-
-# Use JNI
-include_directories(${JNI_INCLUDE_DIRS})
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # Use last C++ standard
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14" )

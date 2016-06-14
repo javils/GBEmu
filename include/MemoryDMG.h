@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <stdint.h>
+#include <algorithm>
 
 #include "Memory.h"
 #include "MemoryBankController.h"

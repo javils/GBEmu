@@ -6,6 +6,7 @@
 #define GBEMU_RENDERTHREAD_H
 
 #include <QThread>
+#include <QMutex>
 #include <QGraphicsView>
 #include <Gameboy.h>
 #include <ui_mainwindow.h>

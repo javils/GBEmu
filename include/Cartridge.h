@@ -9,6 +9,8 @@
 #include <fstream>
 #include <vector>
 #include <array>
+#include <algorithm>
+#include <memory>
 
 using namespace std;
 

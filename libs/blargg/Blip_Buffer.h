@@ -6,6 +6,8 @@
 
 // internal
 #include <limits.h>
+#include <stdlib.h>
+
 
 #if INT_MAX < 0x7FFFFFFF || LONG_MAX == 0x7FFFFFFF
 typedef long blip_long;
