@@ -17,12 +17,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->label->installEventFilter(this);
 
-#ifdef W_OS_LINUX
-    ui->label->resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1 + 22);
-    ui->centralWidget->resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1 + 22);
+#ifdef __linux__
     resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1 + 22);
 #endif
 
+    centerMainWindow(1);
     renderThread = new RenderThread(ui);
     expand = 1;
 
@@ -45,10 +44,6 @@ void MainWindow::on_actionX1_triggered() {
     ui->actionX2->setChecked(false);
     ui->actionX4->setChecked(false);
 
-    resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1);
-    ui->label->resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1);
-    ui->centralWidget->resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1);
-
     resizeMainWindow(1);
     centerMainWindow(1);
 }
@@ -57,10 +52,6 @@ void MainWindow::on_actionX2_triggered() {
     ui->actionX1->setChecked(false);
     ui->actionX2->setChecked(true);
     ui->actionX4->setChecked(false);
-
-    resize(WINDOW_WIDTH_X1 * 2, WINDOW_HEIGHT_X1 * 2);
-    ui->label->resize(WINDOW_WIDTH_X1 * 2, WINDOW_HEIGHT_X1 * 2);
-    ui->centralWidget->resize(WINDOW_WIDTH_X1 * 2, WINDOW_HEIGHT_X1 * 2);
 
     resizeMainWindow(2);
     centerMainWindow(2);
@@ -101,10 +92,16 @@ void MainWindow::centerMainWindow(uint8_t i) {
 
 void MainWindow::resizeMainWindow(uint8_t i) {
     expand = i;
-    resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
-    ui->label->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
-    renderThread->setResize(i);
+    /*resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
     ui->centralWidget->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
+    ui->label->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);*/
+
+#ifdef __linux__
+    resize(WINDOW_WIDTH_X1 * i, (WINDOW_HEIGHT_X1 * i) + 22);
+    ui->label->resize(WINDOW_WIDTH_X1 * i, (WINDOW_HEIGHT_X1) * i);
+    ui->centralWidget->resize(WINDOW_WIDTH_X1 * i, (WINDOW_HEIGHT_X1) * i);
+#endif
+    renderThread->setResize(i);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *e) {
