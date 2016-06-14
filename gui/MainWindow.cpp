@@ -4,8 +4,6 @@
 
 #include <QGraphicsScene>
 #include <QFileDialog>
-#include <QDesktopWidget>
-#include "ui_mainwindow.h"
 #include "MainWindow.h"
 
 
@@ -16,6 +14,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->label->installEventFilter(this);
+
+#ifdef W_OS_LINUX
+    ui->label->resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1 + 22);
+    ui->centralWidget->resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1 + 22);
+    resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1 + 22);
+#endif
 
     renderThread = new RenderThread(ui);
     expand = 1;
