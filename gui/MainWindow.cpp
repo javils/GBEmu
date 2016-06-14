@@ -92,14 +92,16 @@ void MainWindow::centerMainWindow(uint8_t i) {
 
 void MainWindow::resizeMainWindow(uint8_t i) {
     expand = i;
-    /*resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
-    ui->centralWidget->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
-    ui->label->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);*/
+
 
 #ifdef __linux__
     resize(WINDOW_WIDTH_X1 * i, (WINDOW_HEIGHT_X1 * i) + 22);
     ui->label->resize(WINDOW_WIDTH_X1 * i, (WINDOW_HEIGHT_X1) * i);
     ui->centralWidget->resize(WINDOW_WIDTH_X1 * i, (WINDOW_HEIGHT_X1) * i);
+#else
+    resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
+    ui->centralWidget->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
+    ui->label->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
 #endif
     renderThread->setResize(i);
 }
