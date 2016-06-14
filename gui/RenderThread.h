@@ -14,7 +14,7 @@ using namespace std;
 
 class RenderThread : public QThread {
 public:
-    RenderThread(Ui::MainWindow *ui) : ui(ui) { };
+    RenderThread(Ui::MainWindow *ui) : ui(ui), init(false) { };
 
     void Init(std::string fileName);
 
@@ -24,14 +24,23 @@ public:
 
     void KeyReleased(Input::Gameboy_Keys key);
 
+    void saveGame();
+
     void RenderFrame(array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screen);
 
     void finish() { finished = true; }
 
+    bool isInit() { return init; }
+
+    void setResize(uint8_t resize) { this->resize = resize; }
+
 private:
     bool finished;
+    bool init;
     GameBoy *gameBoy;
     QMutex mutex;
+
+    uint8_t resize;
 
     Ui::MainWindow *ui;
 

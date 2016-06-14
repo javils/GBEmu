@@ -36,26 +36,28 @@ void RenderThread::Init(std::string fileName) {
     gameBoy = new GameBoy();
     gameBoy->init(fileName);
     finished = false;
+    init = true;
     sound = new Sound_Queue();
 
     sound->start(44100, 2);
+
+    resize = 1;
 }
 
 void RenderThread::run() {
 
     QTime timer;
     timer.start();
-    double before = timer.elapsed();
-    double before2 = 0;
+    double before = 0;
     double after = 0;
     double rest = 0;
 
     while (!finished) {
-        before2 = timer.elapsed();
+        before = timer.elapsed();
         RenderFrame(gameBoy->step(updateSound));
         after = timer.elapsed();
 
-        double diff = after - before2 + rest;
+        double diff = after - before + rest;
 
         if (diff < double(1000.0f / 60.0f)) {
             QThread::msleep((Uint32) (17 - diff));
@@ -80,6 +82,12 @@ void RenderThread::KeyReleased(Input::Gameboy_Keys key) {
     mutex.unlock();
 }
 
+void RenderThread::saveGame() {
+    mutex.lock();
+    gameBoy->writeSave();
+    mutex.unlock();
+}
+
 void RenderThread::RenderFrame(array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screen) {
     mutex.lock();
 
@@ -90,6 +98,8 @@ void RenderThread::RenderFrame(array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCR
             LCDColor color = DMGPalette[screen[y][x]];
             image.setPixel(x, y, qRgb(color.getR(), color.getG(), color.getB()));
         }
+
+    image = image.scaled(LCD::SCREEN_WIDTH * resize, LCD::SCREEN_HEIGHT * resize, Qt::KeepAspectRatio);
 
     QPixmap pixmap = QPixmap::fromImage(image);
 

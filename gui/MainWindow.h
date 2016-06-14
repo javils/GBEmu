@@ -38,10 +38,14 @@ private slots:
 
     void on_actionX4_triggered();
 
-    void on_actionX8_triggered();
+    void on_actionGuardar_triggered();
+
+    void closeEvent(QCloseEvent *);
+
 
 private:
     Ui::MainWindow *ui;
+    uint8_t expand;
 
     RenderThread *renderThread;
 

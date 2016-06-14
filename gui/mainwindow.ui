@@ -43,7 +43,6 @@
     </property>
     <addaction name="actionLeer_ROM"/>
     <addaction name="actionGuardar"/>
-    <addaction name="actionCargar"/>
    </widget>
    <widget class="QMenu" name="menuVentana">
     <property name="title">
@@ -52,7 +51,6 @@
     <addaction name="actionX1"/>
     <addaction name="actionX2"/>
     <addaction name="actionX4"/>
-    <addaction name="actionX8"/>
    </widget>
    <addaction name="menuArchivo"/>
    <addaction name="menuVentana"/>
@@ -65,11 +63,6 @@
   <action name="actionGuardar">
    <property name="text">
     <string>Guardar...</string>
-   </property>
-  </action>
-  <action name="actionCargar">
-   <property name="text">
-    <string>Cargar...</string>
    </property>
   </action>
   <action name="actionX1">
@@ -97,14 +90,6 @@
    </property>
    <property name="text">
     <string>x4</string>
-   </property>
-  </action>
-  <action name="actionX8">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>x8</string>
    </property>
   </action>
  </widget>

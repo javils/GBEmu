@@ -81,7 +81,7 @@ void GameBoy::writeSave() {
     }
 
     if (cart->getCartridgeType() == Cartridge::CARTRIDGETYPE_MBC2)
-        file.write(reinterpret_cast<char *>(mem->RAMBanks[0].data()), 0x200);
+        file.write(reinterpret_cast<char *>(cpu->getMem()->RAMBanks[0].data()), 0x200);
     else
         for (uint16_t i = 0; i < cart->getRAMBanks(); i++)
             file.write(reinterpret_cast<char *>(cpu->getMem()->RAMBanks[i].data()), 0x2000);
@@ -104,7 +104,7 @@ void GameBoy::loadSave() {
     }
 
     if (cart->getCartridgeType() == Cartridge::CARTRIDGETYPE_MBC2)
-        file.read(reinterpret_cast<char *>(mem->RAMBanks[0].data()), 0x200);
+        file.read(reinterpret_cast<char *>(cpu->getMem()->RAMBanks[0].data()), 0x200);
     else
         for (uint16_t i = 0; i < cart->getRAMBanks(); i++)
             file.read(reinterpret_cast<char *>(cpu->getMem()->RAMBanks[i].data()), 0x2000);

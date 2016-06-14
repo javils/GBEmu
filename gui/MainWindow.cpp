@@ -18,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->label->installEventFilter(this);
 
     renderThread = new RenderThread(ui);
+    expand = 1;
+
 }
 
 MainWindow::~MainWindow() {
@@ -28,6 +30,7 @@ void MainWindow::on_actionLeer_ROM_triggered() {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Leer ROM..."),
                                                     QDir::currentPath(), tr("Archivos ROM (*.gb)"));
     renderThread->Init(fileName.toStdString());
+    renderThread->setResize(expand);
     renderThread->start(QThread::Priority::NormalPriority);
 }
 
@@ -35,7 +38,6 @@ void MainWindow::on_actionX1_triggered() {
     ui->actionX1->setChecked(true);
     ui->actionX2->setChecked(false);
     ui->actionX4->setChecked(false);
-    ui->actionX8->setChecked(false);
 
     resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1);
     ui->label->resize(WINDOW_WIDTH_X1, WINDOW_HEIGHT_X1);
@@ -49,7 +51,6 @@ void MainWindow::on_actionX2_triggered() {
     ui->actionX1->setChecked(false);
     ui->actionX2->setChecked(true);
     ui->actionX4->setChecked(false);
-    ui->actionX8->setChecked(false);
 
     resize(WINDOW_WIDTH_X1 * 2, WINDOW_HEIGHT_X1 * 2);
     ui->label->resize(WINDOW_WIDTH_X1 * 2, WINDOW_HEIGHT_X1 * 2);
@@ -59,24 +60,30 @@ void MainWindow::on_actionX2_triggered() {
     centerMainWindow(2);
 }
 
+void MainWindow::on_actionGuardar_triggered() {
+    if (renderThread != nullptr && renderThread->isInit()) {
+        renderThread->saveGame();
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *) {
+    if (renderThread != nullptr && renderThread->isInit()) {
+        renderThread->saveGame();
+        renderThread->finish();
+        renderThread->wait();
+        delete renderThread;
+        renderThread = nullptr;
+    }
+
+}
+
 void MainWindow::on_actionX4_triggered() {
     ui->actionX1->setChecked(false);
     ui->actionX2->setChecked(false);
     ui->actionX4->setChecked(true);
-    ui->actionX8->setChecked(false);
 
     resizeMainWindow(4);
     centerMainWindow(4);
-}
-
-void MainWindow::on_actionX8_triggered() {
-    ui->actionX1->setChecked(false);
-    ui->actionX2->setChecked(false);
-    ui->actionX4->setChecked(false);
-    ui->actionX8->setChecked(true);
-
-    resizeMainWindow(8);
-    centerMainWindow(8);
 }
 
 void MainWindow::centerMainWindow(uint8_t i) {
@@ -87,8 +94,10 @@ void MainWindow::centerMainWindow(uint8_t i) {
 }
 
 void MainWindow::resizeMainWindow(uint8_t i) {
+    expand = i;
     resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
     ui->label->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
+    renderThread->setResize(i);
     ui->centralWidget->resize(WINDOW_WIDTH_X1 * i, WINDOW_HEIGHT_X1 * i);
 }
 
@@ -109,7 +118,7 @@ void MainWindow::keyPressEvent(QKeyEvent *e) {
         case Qt::Key_A:
             renderThread->KeyPressed(Input::A_KEY);
             break;
-        case Qt::Key_B:
+        case Qt::Key_S:
             renderThread->KeyPressed(Input::B_KEY);
             break;
         case Qt::Key_Enter:
@@ -141,7 +150,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *e) {
         case Qt::Key_A:
             renderThread->KeyReleased(Input::A_KEY);
             break;
-        case Qt::Key_B:
+        case Qt::Key_S:
             renderThread->KeyReleased(Input::B_KEY);
             break;
         case Qt::Key_Enter:
