@@ -4,6 +4,8 @@
 
 #include <QGraphicsScene>
 #include <QFileDialog>
+#include <QDesktopWidget>
+#include "ui_mainwindow.h"
 #include "MainWindow.h"
 
 
