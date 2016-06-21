@@ -11,6 +11,14 @@ void updateSound(blip_sample_t *sample, int count) {
     sound->write(sample, count);
 }
 
+RenderThread::~RenderThread() {
+    delete sound;
+    sound = nullptr;
+
+    delete gameBoy;
+    gameBoy = nullptr;
+}
+
 void RenderThread::Init(std::string fileName) {
 
     DMGPalette[0].setR(0xFF);
@@ -103,7 +111,9 @@ void RenderThread::RenderFrame(array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCR
 
     QPixmap pixmap = QPixmap::fromImage(image);
 
-    ui->label->setPixmap(pixmap);
+    // When change ROM all the components of ui are null.
+    if (ui->label != nullptr)
+        ui->label->setPixmap(pixmap);
 
     mutex.unlock();
 }

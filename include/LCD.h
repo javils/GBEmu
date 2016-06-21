@@ -42,9 +42,15 @@ public:
 
     inline void setPixelColor(uint8_t x, uint8_t y, uint8_t color) { screenBuffer[y][x] = color; }
 
+    inline void setColorCache(uint8_t x, uint8_t y, uint8_t color) { colorCacheBuffer[y][x] = color; }
+
     inline array<array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT> getScreenBuffer() { return screenBuffer; };
+
+    // This buffer contains the color without the palette
+    inline array<array<uint8_t, SCREEN_WIDTH>, SCREEN_HEIGHT> getColorCache() { return colorCacheBuffer; };
 private:
     array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screenBuffer;
+    array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> colorCacheBuffer;
 };
 
 typedef array<array<uint8_t, LCD::SCREEN_WIDTH>, LCD::SCREEN_HEIGHT> screen_t;

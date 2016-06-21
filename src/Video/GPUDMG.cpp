@@ -182,6 +182,7 @@ void GPUDMG::renderBG() {
             continue;
 
         lcd->setPixelColor(xPos, lyCounter, getColor(color, IOHandler::BGP));
+        lcd->setColorCache(xPos, lyCounter, (uint8_t) color);
 
     }
 }
@@ -248,6 +249,7 @@ void GPUDMG::renderWindow() {
             continue;
 
         lcd->setPixelColor(xPos, lyCounter, getColor(color, IOHandler::BGP));
+        lcd->setColorCache(xPos, lyCounter, (uint8_t) color);
     }
     windowLine++;
 }
@@ -314,11 +316,14 @@ void GPUDMG::renderSprites() {
                 if (xPosition < 0 || xPosition >= LCD::SCREEN_WIDTH)
                     continue;
 
+                uint8_t color_cache = lcd->getColorCache()[lyCounter][xPosition];
                 //< If behindBG is active and the background/windows color != 0 (WHITE) then not show sprite.
-                if (behindBG && (lcd->getScreenBuffer()[lyCounter][xPosition] != 0x0))
+                if (behindBG && (color_cache != 0))
                     continue;
 
                 lcd->setPixelColor((uint8_t) xPosition, lyCounter, col);
+
+                lcd->setColorCache((uint8_t) xPosition, lyCounter, SetBit(color_cache, 3));
             }
         }
     }

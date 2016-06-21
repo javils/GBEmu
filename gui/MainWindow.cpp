@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
     centerMainWindow(1);
-    renderThread = new RenderThread(ui);
+    //renderThread = new RenderThread(ui);
     expand = 1;
 
 }
@@ -32,11 +32,24 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::on_actionLeer_ROM_triggered() {
+
+    if (renderThread != nullptr) {
+        renderThread->finish();
+        renderThread->wait(500);
+        renderThread->deleteLater();
+        delete renderThread;
+
+        renderThread = nullptr;
+    }
     QString fileName = QFileDialog::getOpenFileName(this, tr("Leer ROM..."),
                                                     QDir::currentPath(), tr("Archivos ROM (*.gb)"));
+
+
+    renderThread = new RenderThread(ui);
     renderThread->Init(fileName.toStdString());
     renderThread->setResize(expand);
     renderThread->start(QThread::Priority::NormalPriority);
+
 }
 
 void MainWindow::on_actionX1_triggered() {

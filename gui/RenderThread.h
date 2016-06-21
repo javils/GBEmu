@@ -17,6 +17,8 @@ class RenderThread : public QThread {
 public:
     RenderThread(Ui::MainWindow *ui) : ui(ui), init(false) { };
 
+    ~RenderThread();
+
     void Init(std::string fileName);
 
     void run();

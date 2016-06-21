@@ -99,7 +99,7 @@ void GameBoy::loadSave() {
     ifstream file(fileName, ifstream::out | ifstream::binary);
 
     if (!file.is_open()) {
-        printf("Couldn't save RAM.");   //< Throw exception.
+        printf("%s, Couldn't load save file.", fileName.c_str());   //< Throw exception.
         return;
     }
 
